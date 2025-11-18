@@ -1,0 +1,13 @@
+*.vcxproj
+*.vcxproj.filters
+*.sln
+CMakeCache.txt
+cmake_install.cmake
+.vs/
+CMakeFiles
+_deps/
+CMakeSettings.json
+out/
+build/
+.vscode/
+.cache/
