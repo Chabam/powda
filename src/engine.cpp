@@ -1,16 +1,18 @@
 #include <cassert>
-#include <powda/engine.hpp>
-#include <powda/engine_component.hpp>
-#include <powda/time_step.hpp>
-#include <powda/logger.hpp>
-
-#include <GLFW/glfw3.h>
 #include <chrono>
 #include <format>
 #include <memory>
 #include <stdexcept>
-#include "powda/shader.hpp"
-#include "powda/shader_program.hpp"
+#include <random>
+
+#include <powda/engine.hpp>
+#include <powda/engine_component.hpp>
+#include <powda/logger.hpp>
+#include <powda/shader.hpp>
+#include <powda/shader_program.hpp>
+#include <powda/time_step.hpp>
+
+#include <GLFW/glfw3.h>
 
 namespace powda
 {
@@ -32,8 +34,9 @@ void Engine::render(Window& window)
     glEnable(GL_DEPTH_TEST);
 
     const char* original_title = window.get_title();
-
-    m_pixel_grid.set(10, 10, 0xFF00FF);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, 0xFFFFFF);
 
     while (!window.should_close())
     {
@@ -43,28 +46,35 @@ void Engine::render(Window& window)
 
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        glClearBufferfv(GL_COLOR, 0, black);
 
-        m_pixel_grid.render();
-        window.update();
-
-        TimeStep   time_step;
-        const auto after_render = std::chrono::system_clock::now();
-        time_step.m_render_time = after_render - last_frame;
-        last_frame              = after_render;
-
-        const auto elapsed              = after_render - before_render;
-        const auto max_time_per_frame   = std::chrono::system_clock::duration(1s) / m_target_fps;
-        time_step.m_next_frame_deadline = after_render + (max_time_per_frame - elapsed);
-
-        for (const int pressed_key : window.get_keyboard_info().m_current_pressed_keys)
+        for (size_t x = 0; x < m_pixel_grid.width(); ++x)
         {
-            if (pressed_key == GLFW_KEY_ESCAPE || pressed_key == GLFW_KEY_Q)
+            for (size_t y = 0; y < m_pixel_grid.height(); ++y)
             {
-                m_logger.info("Closing!");
-                window.close();
+                auto rgb = distrib(gen) << 2;
+                auto a = 0xFF;
+                m_pixel_grid.set(x, y, rgb | a);
             }
+        }
+m_pixel_grid.render();
+window.update();
+
+TimeStep   time_step;
+const auto after_render = std::chrono::system_clock::now();
+time_step.m_render_time = after_render - last_frame;
+last_frame              = after_render;
+
+const auto elapsed              = after_render - before_render;
+const auto max_time_per_frame   = std::chrono::system_clock::duration(1s) / m_target_fps;
+time_step.m_next_frame_deadline = after_render + (max_time_per_frame - elapsed);
+
+for (const int pressed_key : window.get_keyboard_info().m_current_pressed_keys)
+{
+    if (pressed_key == GLFW_KEY_ESCAPE || pressed_key == GLFW_KEY_Q)
+    {
+        m_logger.info("Closing!");
+        window.close();
+    }
         }
 
         ++m_frame_count;
@@ -83,8 +93,15 @@ void Engine::render(Window& window)
     }
 }
 
-void Engine::handle_gl_error(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                             const GLchar* message, const void* user_param)
+void Engine::handle_gl_error(
+    GLenum        source,
+    GLenum        type,
+    GLuint        id,
+    GLenum        severity,
+    GLsizei       length,
+    const GLchar* message,
+    const void*   user_param
+)
 {
     Logger::Level level;
     switch (severity)

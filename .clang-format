@@ -13,11 +13,11 @@ BreakTemplateDeclarations: Yes
 PointerAlignment: Left
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<lvox/'
+  - Regex:           '^<powda/'
     Priority:        2
     SortPriority:    2
     CaseSensitive:   true
-  - Regex:           '^<pdal/'
+  - Regex:           '^<glad/'
     Priority:        1
     SortPriority:    1
     CaseSensitive:   true

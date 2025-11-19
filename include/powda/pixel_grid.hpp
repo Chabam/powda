@@ -17,6 +17,9 @@ class PixelGrid
     void set(unsigned int x, unsigned int y, unsigned int color);
     void render() const;
 
+    unsigned int width() const { return m_width; }
+    unsigned int height() const { return m_height; }
+
   private:
     GLuint                    m_tex_id;
     ShaderProgram             m_shader_program;

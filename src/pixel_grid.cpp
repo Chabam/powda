@@ -1,6 +1,7 @@
+#include <glad/gl.h>
+
 #include <powda/pixel_grid.hpp>
 #include <powda/shader.hpp>
-#include "glad/gl.h"
 
 namespace powda
 {
@@ -56,14 +57,22 @@ PixelGrid::PixelGrid(unsigned int width, unsigned int height)
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
     constexpr float viewport_quad[6][4] = {
-        {-1.f, -1.f, 0.f, 0.f}, {-1.f, 1.f, 0.f, 1.f}, {1.f, 1.f, 1.f, 1.f},
-        {-1.f, -1.f, 0.f, 0.f}, {1.f, -1.f, 1.f, 0.f}, {1.f, 1.f, 1.f, 1.f}
+        {-1.f, -1.f, 0.f, 0.f},
+        {-1.f, 1.f, 0.f, 1.f},
+        {1.f, 1.f, 1.f, 1.f},
+        {-1.f, -1.f, 0.f, 0.f},
+        {1.f, -1.f, 1.f, 0.f},
+        {1.f, 1.f, 1.f, 1.f}
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(viewport_quad), viewport_quad, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat))
+    );
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
     glTextureStorage2D(m_tex_id, 1, GL_RGBA8, m_width, m_height);
