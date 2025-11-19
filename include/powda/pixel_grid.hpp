@@ -1,7 +1,7 @@
 #ifndef POWDA_PIXEL_GRID
 #define POWDA_PIXEL_GRID
 
-#include <vector>
+#include <cstddef>
 #include <glad/gl.h>
 #include <powda/shader_program.hpp>
 
@@ -21,12 +21,14 @@ class PixelGrid
     unsigned int height() const { return m_height; }
 
   private:
+    GLuint                    m_pbo_id;
     GLuint                    m_tex_id;
     ShaderProgram             m_shader_program;
     GLuint                    m_vbo;
     GLuint                    m_vao;
     unsigned int              m_width;
     unsigned int              m_height;
+    size_t                    m_pixel_count;
     std::vector<unsigned int> m_pixels;
 };
 

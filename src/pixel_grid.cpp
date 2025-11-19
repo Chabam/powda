@@ -36,14 +36,42 @@ void main()
 )";
 
 PixelGrid::PixelGrid(unsigned int width, unsigned int height)
-    : m_tex_id{}
+    : m_pbo_id{}
+    , m_tex_id{}
     , m_shader_program{}
     , m_vbo{}
     , m_vao{}
     , m_width{width}
     , m_height{height}
+    , m_pixel_count{m_width * m_height}
     , m_pixels{}
 {
+    m_pixels.resize(m_pixel_count);
+    std::fill(m_pixels.begin(), m_pixels.end(), 0xFFFFFFFF);
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
+    glBindTexture(GL_TEXTURE_2D, m_tex_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        m_width,
+        m_height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        (GLvoid*)m_pixels.data()
+    );
+
+    glGenBuffers(1, &m_pbo_id);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_id);
+
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, m_width * m_height, 0, GL_STREAM_DRAW);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
     auto vert = std::make_shared<Shader>(Shader::Type::Vertex, g_vert_shader);
     auto frag = std::make_shared<Shader>(Shader::Type::Fragment, g_frag_shader);
     m_shader_program.attach_shader(frag);
@@ -57,12 +85,12 @@ PixelGrid::PixelGrid(unsigned int width, unsigned int height)
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
     constexpr float viewport_quad[6][4] = {
-        {-1.f, -1.f, 0.f, 0.f},
-        {-1.f, 1.f, 0.f, 1.f},
-        {1.f, 1.f, 1.f, 1.f},
-        {-1.f, -1.f, 0.f, 0.f},
-        {1.f, -1.f, 1.f, 0.f},
-        {1.f, 1.f, 1.f, 1.f}
+        {-1.f, -1.f, 0.f, 0.f}, // Top left
+        {-1.f, 1.f, 0.f, 1.f},  // Bottom left
+        {1.f, 1.f, 1.f, 1.f},   // Bottom right
+        {-1.f, -1.f, 0.f, 0.f}, // Top left
+        {1.f, -1.f, 1.f, 0.f},  // Top right
+        {1.f, 1.f, 1.f, 1.f}    // Bottom right
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(viewport_quad), viewport_quad, GL_STATIC_DRAW);
@@ -73,41 +101,13 @@ PixelGrid::PixelGrid(unsigned int width, unsigned int height)
     );
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-
-    glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
-    glTextureStorage2D(m_tex_id, 1, GL_RGBA8, m_width, m_height);
-    glTextureParameteri(m_tex_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    m_pixels.resize(m_width * m_height);
-    std::fill(m_pixels.begin(), m_pixels.end(), 0xFFFFFF);
-    // Investigate PBO:
-    // 1. Generate and bind a PBO
-    // GLuint pboId;
-    // glGenBuffers(1, &pboId);
-    // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboId);
-
-    // 2. Allocate storage for the PBO
-    // glBufferData(GL_PIXEL_UNPACK_BUFFER, imageSize, 0, GL_STREAM_DRAW);
-
-    // 3. Map the PBO to client memory and fill with data
-    // void* ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-    // Copy image data into ptr
-    // memcpy(ptr, imageData, imageSize);
-    // glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-
-    // 4. Upload data from PBO to texture
-    // glBindTexture(GL_TEXTURE_2D, textureId);
-    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, 0); // Last argument is
-    // 0, indicating data comes from bound PBO
-
-    // 5. Unbind the PBO
-    // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
 PixelGrid::~PixelGrid()
 {
     glDeleteBuffers(1, &m_vbo);
     glDeleteVertexArrays(1, &m_vao);
+    glDeleteBuffers(1, &m_pbo_id);
     glDeleteTextures(1, &m_tex_id);
 }
 
@@ -119,12 +119,21 @@ void PixelGrid::set(unsigned int x, unsigned int y, unsigned int color)
 void PixelGrid::render() const
 {
     m_shader_program.use();
-    glBindTextureUnit(0, m_tex_id);
-    glTextureSubImage2D(
-        m_tex_id, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, m_pixels.data()
-    );
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_id);
+
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, m_pixel_count * 4, 0, GL_STREAM_DRAW);
+    auto ptr = static_cast<unsigned int*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+    std::copy(m_pixels.begin(), m_pixels.end(), ptr);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+    glBindTexture(GL_TEXTURE_2D, m_tex_id);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindVertexArray(m_vao);
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
 } // namespace powda

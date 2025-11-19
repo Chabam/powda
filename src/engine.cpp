@@ -20,7 +20,7 @@ namespace powda
 Engine::Engine()
     : m_target_fps{60}
     , m_frame_count{}
-    , m_pixel_grid{20, 20}
+    , m_pixel_grid{800, 600}
 {
 }
 
