@@ -15,60 +15,11 @@
 namespace powda
 {
 
-static constexpr auto g_vert_shader = R"(
-#version 460
-
-// uniform sampler2D inTexture;
-in vec2 inTexCoord;
-out vec2 texCoord;
-
-void main()
-{
-    texCoord = inTexCoord;
-}
-)";
-
-static constexpr auto g_frag_shader = R"(
-#version 460
-
-in vec2 texCoord;
-uniform sampler2D inTexture;
-out vec4 fragColor;
-
-void main()
-{
-    fragColor = texture(inTexture, texCoord);
-}
-)";
-
 Engine::Engine()
     : m_target_fps{60}
     , m_frame_count{}
-    , m_shader_program{}
-    , m_vbo{}
-    , m_vao{}
+    , m_pixel_grid{20, 20}
 {
-    auto vert = std::make_shared<Shader>(Shader::Type::Vertex, g_vert_shader);
-    auto frag = std::make_shared<Shader>(Shader::Type::Fragment, g_frag_shader);
-    m_shader_program.attach_shader(frag);
-    m_shader_program.attach_shader(vert);
-    m_shader_program.link();
-
-    glGenBuffers(1, &m_vbo);
-    glGenVertexArrays(1, &m_vao);
-
-    glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    constexpr float viewport_quad[6][2] = {
-        {-1.f, -1.f}, {-1.f, 1.f}, {1.f, 1.f},
-        {-1.f, -1.f}, {1.f, -1.f}, {1.f, 1.f}
-    };
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(viewport_quad), viewport_quad, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
-    glEnableVertexAttribArray(0);
 }
 
 void Engine::render(Window& window)
@@ -76,11 +27,13 @@ void Engine::render(Window& window)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(handle_gl_error, nullptr);
 
-    auto last_frame = std::chrono::system_clock::now();
+    auto last_frame            = std::chrono::system_clock::now();
     auto start_fps_count_timer = std::chrono::system_clock::now();
     glEnable(GL_DEPTH_TEST);
 
     const char* original_title = window.get_title();
+
+    m_pixel_grid.set(10, 10, 0xFF00FF);
 
     while (!window.should_close())
     {
@@ -93,9 +46,7 @@ void Engine::render(Window& window)
         static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
         glClearBufferfv(GL_COLOR, 0, black);
 
-        glBindVertexArray(m_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
+        m_pixel_grid.render();
         window.update();
 
         TimeStep   time_step;
@@ -119,12 +70,16 @@ void Engine::render(Window& window)
         ++m_frame_count;
         if (after_render - start_fps_count_timer > 1s)
         {
-            window.set_title(std::vformat("{}: {} fps", std::make_format_args(original_title, m_frame_count)).c_str());
-            m_frame_count = 0;
+            window.set_title(
+                std::vformat("{}: {} fps", std::make_format_args(original_title, m_frame_count))
+                    .c_str()
+            );
+            m_frame_count         = 0;
             start_fps_count_timer = std::chrono::system_clock::now();
         }
 
-        while(std::chrono::system_clock::now() < time_step.m_next_frame_deadline);
+        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline)
+            ;
     }
 }
 
