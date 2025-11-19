@@ -117,23 +117,25 @@ PixelGrid::~PixelGrid()
 
 void PixelGrid::write_world_to_pixel_buf()
 {
-    const auto material_to_color = [](Materials mat) -> unsigned int {
-        switch (mat)
-        {
-        case Materials::Empty:
-            return 0xFF131313;
-        case Materials::Powder:
-            return 0xFF2596be;
-        case Materials::Wall:
-            return 0xFFABABAB;
-        default:
-            assert(false && "SOMETHIN WRONG");
-        }
+    std::fill(
+        m_pixels_buffers[m_current_buffer],
+        m_pixels_buffers[m_current_buffer] + m_world->count(),
+        0xFF131313
+    );
+
+    const auto xy_to_flat_idx = [width = m_world->width()](const World::coord& c) {
+        const auto [x, y] = c;
+        return x + (y * width);
     };
 
-    for (size_t i = 0; i < m_world->count(); ++i)
+    for (const auto& c : m_world->walls())
     {
-        m_pixels_buffers[m_current_buffer][i] = material_to_color(m_world->get(i));
+        m_pixels_buffers[m_current_buffer][xy_to_flat_idx(c)] = 0xFFABABAB;
+    }
+
+    for (const auto& c : m_world->powders())
+    {
+        m_pixels_buffers[m_current_buffer][xy_to_flat_idx(c)] = 0xFF2596BE;
     }
 }
 
