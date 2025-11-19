@@ -11,6 +11,7 @@
 #include <powda/shader.hpp>
 #include <powda/shader_program.hpp>
 #include <powda/time_step.hpp>
+#include "powda/materials.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -20,7 +21,8 @@ namespace powda
 Engine::Engine()
     : m_target_fps{60}
     , m_frame_count{}
-    , m_pixel_grid{160, 90}
+    , m_world{std::make_shared<World>(160, 90)}
+    , m_pixel_grid{m_world}
 {
 }
 
@@ -33,13 +35,14 @@ void Engine::render(Window& window)
     auto start_fps_count_timer = std::chrono::system_clock::now();
     glEnable(GL_DEPTH_TEST);
 
-    const char*                     original_title = window.get_title();
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    std::uniform_int_distribution<> distrib(0, 0xFFFFFF);
-    size_t                          x = 0;
-    size_t                          y = 0;
+    const char* original_title = window.get_title();
 
+    for (size_t x = 0; x < m_world->width(); ++x)
+    {
+        m_world->set(x, 0, Materials::Wall);
+    }
+
+    const auto middle = m_world->width() / 2;
     while (!window.should_close())
     {
         using namespace std::chrono_literals;
@@ -49,26 +52,12 @@ void Engine::render(Window& window)
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        auto rgb = distrib(gen) << 2;
-        auto a   = 0xFF;
-
-        if (y < m_pixel_grid.height())
-        {
-            m_pixel_grid.set(x, y, rgb | a);
-        }
-
-        if (x < m_pixel_grid.width())
-        {
-            ++x;
-        }
-        else if (x == m_pixel_grid.width() && y < m_pixel_grid.height())
-        {
-            x = 0;
-            ++y;
-        }
-
-            m_pixel_grid.render();
+        m_pixel_grid.render();
         window.update();
+
+        m_world->set(middle, m_world->height() - 1, Materials::Powder);
+        m_world->next_step();
+        m_world->set(middle, m_world->height() - 1, Materials::Powder);
 
         TimeStep   time_step;
         const auto after_render = std::chrono::system_clock::now();

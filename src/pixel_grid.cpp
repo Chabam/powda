@@ -1,8 +1,10 @@
 #include <glad/gl.h>
+#include <cassert>
 #include <execution>
 
 #include <powda/pixel_grid.hpp>
 #include <powda/shader.hpp>
+#include "powda/materials.hpp"
 
 namespace powda
 {
@@ -36,30 +38,25 @@ void main()
 }
 )";
 
-PixelGrid::PixelGrid(unsigned int width, unsigned int height)
-    : m_pbo_ids{}
+PixelGrid::PixelGrid(const WorldPtr& world)
+    : m_world{world}
+    , m_pbo_ids{}
     , m_tex_id{}
     , m_shader_program{}
     , m_vbo{}
     , m_vao{}
-    , m_width{width}
-    , m_height{height}
-    , m_pixel_count{m_width * m_height}
     , m_current_buffer{0}
     , m_pixels_buffers{}
 {
-    // m_pixels.resize(m_pixel_count);
-    // std::fill(m_pixels.begin(), m_pixels.end(), 0xFFFFFFFF);
-
     glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, m_width, m_height);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, m_world->width(), m_world->height());
     glBindTexture(GL_TEXTURE_2D, 0);
 
     constexpr auto buffer_mask = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-    const auto     data_size   = m_pixel_count * 4;
+    const auto     data_size   = m_world->count() * 4;
 
     for (unsigned char i = 0; i < s_buffer_count; ++i)
     {
@@ -71,7 +68,7 @@ PixelGrid::PixelGrid(unsigned int width, unsigned int height)
             glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, data_size, buffer_mask)
         );
 
-        std::fill(ptr, ptr + m_pixel_count, 0x131313);
+        std::fill(ptr, ptr + m_world->count(), 0x131313);
         m_pixels_buffers[i] = ptr;
     }
 
@@ -118,9 +115,26 @@ PixelGrid::~PixelGrid()
     glDeleteTextures(1, &m_tex_id);
 }
 
-void PixelGrid::set(unsigned int x, unsigned int y, unsigned int color)
+void PixelGrid::write_world_to_pixel_buf()
 {
-    m_pixels_buffers[m_current_buffer][x + (y * m_width)] = color;
+    const auto material_to_color = [](Materials mat) -> unsigned int {
+        switch (mat)
+        {
+        case Materials::Empty:
+            return 0xFF131313;
+        case Materials::Powder:
+            return 0xFF2596be;
+        case Materials::Wall:
+            return 0xFFABABAB;
+        default:
+            assert(false && "SOMETHIN WRONG");
+        }
+    };
+
+    for (size_t i = 0; i < m_world->count(); ++i)
+    {
+        m_pixels_buffers[m_current_buffer][i] = material_to_color(m_world->get(i));
+    }
 }
 
 void PixelGrid::render()
@@ -131,19 +145,15 @@ void PixelGrid::render()
     m_current_buffer   = (m_current_buffer + 1) % s_buffer_count;
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_ids[buffer_to_use]);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_world->width(), m_world->height(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindVertexArray(m_vao);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    std::copy(
-        std::execution::par,
-        m_pixels_buffers[buffer_to_use],
-        m_pixels_buffers[buffer_to_use] + m_pixel_count,
-        m_pixels_buffers[m_current_buffer]
-    );
+
+    write_world_to_pixel_buf();
 }
 
 } // namespace powda

@@ -6,7 +6,8 @@
 
 #include <glad/gl.h>
 #include <powda/shader_program.hpp>
-#include "powda/pixel_grid.hpp"
+#include <powda/pixel_grid.hpp>
+#include <powda/world.hpp>
 
 namespace powda
 {
@@ -21,6 +22,7 @@ class Engine
   private:
     unsigned int       m_target_fps;
     unsigned long long m_frame_count;
+    WorldPtr           m_world;
     PixelGrid          m_pixel_grid;
     Logger             m_logger{"engine"};
 
