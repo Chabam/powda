@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(glfw glad)
 add_subdirectory(${glad_SOURCE_DIR}/cmake ${glad_BINARY_DIR})
 glad_add_library(glad STATIC REPRODUCIBLE LOADER LANGUAGE C API gl:core=4.6)
 
-target_link_libraries(powda PRIVATE glfw glad)
+target_link_libraries(powda PRIVATE glfw glad tbb)
 set_target_properties(powda PROPERTIES CXX_STANDARD 20)
 
 target_include_directories(powda PRIVATE include/)

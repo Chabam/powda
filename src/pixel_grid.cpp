@@ -1,4 +1,5 @@
 #include <glad/gl.h>
+#include <execution>
 
 #include <powda/pixel_grid.hpp>
 #include <powda/shader.hpp>
@@ -36,7 +37,7 @@ void main()
 )";
 
 PixelGrid::PixelGrid(unsigned int width, unsigned int height)
-    : m_pbo_id{}
+    : m_pbo_ids{}
     , m_tex_id{}
     , m_shader_program{}
     , m_vbo{}
@@ -44,33 +45,35 @@ PixelGrid::PixelGrid(unsigned int width, unsigned int height)
     , m_width{width}
     , m_height{height}
     , m_pixel_count{m_width * m_height}
-    , m_pixels{}
+    , m_current_buffer{0}
+    , m_pixels_buffers{}
 {
-    m_pixels.resize(m_pixel_count);
-    std::fill(m_pixels.begin(), m_pixels.end(), 0xFFFFFFFF);
+    // m_pixels.resize(m_pixel_count);
+    // std::fill(m_pixels.begin(), m_pixels.end(), 0xFFFFFFFF);
 
     glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA,
-        m_width,
-        m_height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        (GLvoid*)m_pixels.data()
-    );
-
-    glGenBuffers(1, &m_pbo_id);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_id);
-
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, m_width * m_height, 0, GL_STREAM_DRAW);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, m_width, m_height);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+    constexpr auto buffer_mask = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+    const auto     data_size   = m_pixel_count * 4;
+
+    for (unsigned char i = 0; i < s_buffer_count; ++i)
+    {
+        glGenBuffers(1, &m_pbo_ids[i]);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_ids[i]);
+        glBufferStorage(GL_PIXEL_UNPACK_BUFFER, data_size, nullptr, buffer_mask);
+
+        unsigned int* ptr = static_cast<unsigned int*>(
+            glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, data_size, buffer_mask)
+        );
+
+        std::fill(ptr, ptr + m_pixel_count, 0x131313);
+        m_pixels_buffers[i] = ptr;
+    }
 
     auto vert = std::make_shared<Shader>(Shader::Type::Vertex, g_vert_shader);
     auto frag = std::make_shared<Shader>(Shader::Type::Fragment, g_frag_shader);
@@ -107,26 +110,27 @@ PixelGrid::~PixelGrid()
 {
     glDeleteBuffers(1, &m_vbo);
     glDeleteVertexArrays(1, &m_vao);
-    glDeleteBuffers(1, &m_pbo_id);
+    for (unsigned char i = 0; i < s_buffer_count; ++i)
+    {
+        glDeleteBuffers(1, &m_pbo_ids[i]);
+    }
+
     glDeleteTextures(1, &m_tex_id);
 }
 
 void PixelGrid::set(unsigned int x, unsigned int y, unsigned int color)
 {
-    m_pixels[x + (y * m_width)] = color;
+    m_pixels_buffers[m_current_buffer][x + (y * m_width)] = color;
 }
 
-void PixelGrid::render() const
+void PixelGrid::render()
 {
     m_shader_program.use();
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_id);
 
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, m_pixel_count * 4, 0, GL_STREAM_DRAW);
-    auto ptr = static_cast<unsigned int*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
-    std::copy(m_pixels.begin(), m_pixels.end(), ptr);
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-
+    auto buffer_to_use = m_current_buffer;
+    m_current_buffer   = (m_current_buffer + 1) % s_buffer_count;
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_ids[buffer_to_use]);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindVertexArray(m_vao);
 
@@ -134,6 +138,12 @@ void PixelGrid::render() const
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    std::copy(
+        std::execution::par,
+        m_pixels_buffers[buffer_to_use],
+        m_pixels_buffers[buffer_to_use] + m_pixel_count,
+        m_pixels_buffers[m_current_buffer]
+    );
 }
 
 } // namespace powda

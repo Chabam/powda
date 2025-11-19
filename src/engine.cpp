@@ -20,7 +20,7 @@ namespace powda
 Engine::Engine()
     : m_target_fps{60}
     , m_frame_count{}
-    , m_pixel_grid{800, 600}
+    , m_pixel_grid{160, 90}
 {
 }
 
@@ -33,10 +33,12 @@ void Engine::render(Window& window)
     auto start_fps_count_timer = std::chrono::system_clock::now();
     glEnable(GL_DEPTH_TEST);
 
-    const char* original_title = window.get_title();
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    const char*                     original_title = window.get_title();
+    std::random_device              rd;
+    std::mt19937                    gen(rd());
     std::uniform_int_distribution<> distrib(0, 0xFFFFFF);
+    size_t                          x = 0;
+    size_t                          y = 0;
 
     while (!window.should_close())
     {
@@ -47,34 +49,43 @@ void Engine::render(Window& window)
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        for (size_t x = 0; x < m_pixel_grid.width(); ++x)
+        auto rgb = distrib(gen) << 2;
+        auto a   = 0xFF;
+
+        if (y < m_pixel_grid.height())
         {
-            for (size_t y = 0; y < m_pixel_grid.height(); ++y)
-            {
-                auto rgb = distrib(gen) << 2;
-                auto a = 0xFF;
-                m_pixel_grid.set(x, y, rgb | a);
-            }
+            m_pixel_grid.set(x, y, rgb | a);
         }
-m_pixel_grid.render();
-window.update();
 
-TimeStep   time_step;
-const auto after_render = std::chrono::system_clock::now();
-time_step.m_render_time = after_render - last_frame;
-last_frame              = after_render;
+        if (x < m_pixel_grid.width())
+        {
+            ++x;
+        }
+        else if (x == m_pixel_grid.width() && y < m_pixel_grid.height())
+        {
+            x = 0;
+            ++y;
+        }
 
-const auto elapsed              = after_render - before_render;
-const auto max_time_per_frame   = std::chrono::system_clock::duration(1s) / m_target_fps;
-time_step.m_next_frame_deadline = after_render + (max_time_per_frame - elapsed);
+            m_pixel_grid.render();
+        window.update();
 
-for (const int pressed_key : window.get_keyboard_info().m_current_pressed_keys)
-{
-    if (pressed_key == GLFW_KEY_ESCAPE || pressed_key == GLFW_KEY_Q)
-    {
-        m_logger.info("Closing!");
-        window.close();
-    }
+        TimeStep   time_step;
+        const auto after_render = std::chrono::system_clock::now();
+        time_step.m_render_time = after_render - last_frame;
+        last_frame              = after_render;
+
+        const auto elapsed              = after_render - before_render;
+        const auto max_time_per_frame   = std::chrono::system_clock::duration(1s) / m_target_fps;
+        time_step.m_next_frame_deadline = after_render + (max_time_per_frame - elapsed);
+
+        for (const int pressed_key : window.get_keyboard_info().m_current_pressed_keys)
+        {
+            if (pressed_key == GLFW_KEY_ESCAPE || pressed_key == GLFW_KEY_Q)
+            {
+                m_logger.info("Closing!");
+                window.close();
+            }
         }
 
         ++m_frame_count;
