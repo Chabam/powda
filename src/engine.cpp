@@ -31,13 +31,13 @@ void main()
 static constexpr auto g_frag_shader = R"(
 #version 460
 
-// uniform sampler2D inTexture;
 in vec2 texCoord;
+uniform sampler2D inTexture;
 out vec4 fragColor;
 
 void main()
 {
-    vertexColor = texture(inTexture, texCoord);
+    fragColor = texture(inTexture, texCoord);
 }
 )";
 

@@ -1,22 +1,30 @@
-#include <powda/logger.hpp>
-#include <string>
 #include <ostream>
 #include <stdexcept>
+#include <string>
+
+#include <powda/logger.hpp>
 
 namespace powda
 {
 
-Logger::Logger(const std::string& category, Level lowest_enabled_level, std::ostream& ostream)
+Logger::Logger(const std::string& category, std::ostream& ostream)
     : m_category{category}
-    , m_lowest_enabled_level{lowest_enabled_level}
     , m_stream{ostream}
 {
 }
 
-const char* Logger::level_to_text(Level level)
+auto Logger::set_global_level(Level lowest_level) -> void
+{
+    g_lowest_enabled_level = lowest_level;
+}
+
+auto Logger::level_to_text(Level level) -> const char*
 {
     switch (level)
     {
+    case Level::Verbose:
+        return "VERBOSE";
+        break;
     case Level::Debug:
         return "DEBUG";
         break;
@@ -35,7 +43,7 @@ const char* Logger::level_to_text(Level level)
     }
 }
 
-const char* Logger::level_to_color(Level level)
+auto Logger::level_to_color(Level level) -> const char*
 {
     switch (level)
     {
@@ -57,4 +65,4 @@ const char* Logger::level_to_color(Level level)
     }
 }
 
-} // namespace rt
+} // namespace lvox

@@ -63,46 +63,4 @@ void ShaderProgram::use() const
     glUseProgram(m_id);
 }
 
-void ShaderProgram::set_uniform(const char* varName, const glm::mat4& matrix) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(matrix));
-}
-
-void ShaderProgram::set_uniform(const char* varName, const glm::mat3& matrix) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniformMatrix3fv(uniform_location, 1, GL_FALSE, glm::value_ptr(matrix));
-}
-
-void ShaderProgram::set_uniform(const char* varName, const glm::vec4& vector) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniform4f(uniform_location, vector.r, vector.g, vector.b, vector.a);
-}
-
-void ShaderProgram::set_uniform(const char* varName, const glm::vec3& vector) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniform3f(uniform_location, vector.r, vector.g, vector.b);
-}
-
-void ShaderProgram::set_uniform(const char* varName, float value) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniform1f(uniform_location, value);
-}
-
-void ShaderProgram::set_uniform(const char* varName, int value) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniform1i(uniform_location, value);
-}
-
-void ShaderProgram::set_uniform(const char* varName, unsigned int value) const
-{
-    const int uniform_location = glGetUniformLocation(m_id, varName);
-    glUniform1ui(uniform_location, value);
-}
-
 } // namespace powda

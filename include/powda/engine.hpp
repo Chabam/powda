@@ -10,8 +10,6 @@
 namespace powda
 {
 
-class EngineComponent;
-
 class Engine
 {
   public:

@@ -1,5 +1,5 @@
-#include <powda/graphics/gl/shader.hpp>
-#include <powda/utils/logger.hpp>
+#include <powda/shader.hpp>
+#include <powda/logger.hpp>
 
 #include <filesystem>
 #include <glad/gl.h>
