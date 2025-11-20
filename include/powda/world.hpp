@@ -27,19 +27,17 @@ class World
 
     const std::vector<coord>& powders() const { return m_powders; }
     const std::vector<coord>& walls() const { return m_walls; }
+
   private:
+    using Walls = std::vector<coord>;
+    using Powders = std::vector<coord>;
     unsigned int             m_width;
     unsigned int             m_height;
     size_t                   m_material_count;
-    std::vector<coord>       m_powders;
-    std::vector<coord>       m_walls;
+    Powders                  m_powders;
+    Walls                    m_walls;
 
-    Materials get(
-        unsigned int              x,
-        unsigned int              y,
-        const std::vector<coord>& powders,
-        const std::vector<coord>& walls
-    ) const;
+    Materials get(unsigned int x, unsigned int y, const Powders& powders, const Walls& walls) const;
 };
 
 using WorldPtr = std::shared_ptr<World>;

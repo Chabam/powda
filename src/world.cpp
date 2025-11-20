@@ -1,6 +1,9 @@
 #include <algorithm>
+#include <map>
+#include <functional>
 #include <powda/world.hpp>
-#include "powda/materials.hpp"
+#include <powda/materials.hpp>
+#include <iostream>
 
 namespace powda
 {
@@ -19,29 +22,54 @@ void World::next_step()
     const auto snapshot_powders{m_powders};
     m_powders.clear();
 
+    using Cache = std::map<coord, Materials>;
+    const auto lookup =
+        [this](unsigned int x, unsigned int y, Cache& cache, const Powders& powders) -> Materials {
+        const coord c{x, y};
+        if (cache.contains(c))
+            return cache[c];
+
+        const auto mat = get(x, y, powders, m_walls);
+        cache[c]       = mat;
+        return mat;
+    };
+
+    Cache snapshot_cache;
+    Cache future_cache;
+    using namespace std::placeholders;
+    auto lookup_snapshot =
+        std::bind(lookup, _1, _2, std::ref(snapshot_cache), std::cref(snapshot_powders));
+    auto lookup_future = std::bind(lookup, _1, _2, std::ref(future_cache), std::cref(m_powders));
+
     for (const auto [x, y] : snapshot_powders)
     {
-        const auto below = get(x, (y - 1) % m_height, snapshot_powders, m_walls);
-        if (below == Materials::Empty)
+        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
+        const auto below       = lookup_snapshot(x, down_offset);
+
+        if (below == Materials::Empty || lookup_future(x, down_offset) == Materials::Empty)
         {
-            m_powders.emplace_back(x, (y - 1) % m_height);
+            if (below != Materials::Empty)
+                future_cache[{x, down_offset}] = Materials::Powder;
+
+            m_powders.emplace_back(x, down_offset);
             continue;
         }
 
-        const auto left  = get((x - 1) % m_width, y, snapshot_powders, m_walls);
-        const auto right = get((x + 1) % m_width, y, snapshot_powders, m_walls);
-        const auto below_left =
-            get((x - 1 % m_width), (y - 1) % m_height, snapshot_powders, m_walls);
-        const auto below_right =
-            get((x + 1) % m_width, (y - 1) % m_height, snapshot_powders, m_walls);
+        const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
+        const auto right_offset = std::min(x + 1, m_width - 1);
+
+        const auto left        = lookup_snapshot(left_offset, y);
+        const auto right       = lookup_snapshot(right_offset, y);
+        const auto below_left  = lookup_snapshot(left_offset, down_offset);
+        const auto below_right = lookup_snapshot(right_offset, down_offset);
 
         if (right == Materials::Empty && below_right == Materials::Empty)
         {
-            m_powders.emplace_back((x + 1) % m_width, (y - 1) % m_height);
+            m_powders.emplace_back(right_offset, down_offset);
         }
         else if (left == Materials::Empty && below_left == Materials::Empty)
         {
-            m_powders.emplace_back((x - 1) % m_width, (y - 1) % m_height);
+            m_powders.emplace_back(left_offset, down_offset);
         }
         else if (below == Materials::Wall || below == Materials::Powder)
         {
@@ -81,10 +109,7 @@ Materials World::get(unsigned int x, unsigned int y) const
 }
 
 Materials World::get(
-    unsigned int              x,
-    unsigned int              y,
-    const std::vector<coord>& powders,
-    const std::vector<coord>& walls
+    unsigned int x, unsigned int y, const Powders& powders, const Walls& walls
 ) const
 {
     coord c{x, y};
