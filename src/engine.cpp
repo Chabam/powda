@@ -18,7 +18,7 @@ namespace powda
 {
 
 Engine::Engine()
-    : m_target_fps{1000000}
+    : m_target_fps{60}
     , m_frame_count{}
     , m_world{std::make_shared<World>(160, 90)}
     , m_pixel_grid{m_world}
@@ -42,6 +42,12 @@ void Engine::render(Window& window)
     }
 
     const auto middle = m_world->width() / 2;
+    const auto size = 20;
+    for (size_t x = middle - size; x < middle + size; ++x)
+    {
+        m_world->set(x, 40, Materials::Wall);
+    }
+
     while (!window.should_close())
     {
         using namespace std::chrono_literals;
@@ -55,7 +61,9 @@ void Engine::render(Window& window)
         window.update();
 
         m_world->next_step();
+        m_world->set(middle - 40, m_world->height() - 1, Materials::Powder);
         m_world->set(middle, m_world->height() - 1, Materials::Powder);
+        m_world->set(middle + 40, m_world->height() - 1, Materials::Powder);
 
         TimeStep   time_step;
         const auto after_render = std::chrono::system_clock::now();

@@ -26,6 +26,7 @@ class World
     unsigned int count() const { return m_material_count; }
 
     const std::vector<coord>& powders() const { return m_powders; }
+    const std::vector<coord>& settled_powders() const { return m_settled_powders; }
     const std::vector<coord>& walls() const { return m_walls; }
 
   private:
@@ -35,9 +36,10 @@ class World
     unsigned int             m_height;
     size_t                   m_material_count;
     Powders                  m_powders;
+    Powders                  m_settled_powders;
     Walls                    m_walls;
 
-    Materials get(unsigned int x, unsigned int y, const Powders& powders, const Walls& walls) const;
+    Materials get(unsigned int x, unsigned int y, const Powders& powders, const Powders& settled_powders, const Walls& walls) const;
 };
 
 using WorldPtr = std::shared_ptr<World>;

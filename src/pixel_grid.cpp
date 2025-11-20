@@ -1,6 +1,7 @@
 #include <glad/gl.h>
 #include <cassert>
 #include <execution>
+#include <thread>
 
 #include <powda/pixel_grid.hpp>
 #include <powda/shader.hpp>
@@ -118,6 +119,7 @@ PixelGrid::~PixelGrid()
 void PixelGrid::write_world_to_pixel_buf()
 {
     std::fill(
+        std::execution::par,
         m_pixels_buffers[m_current_buffer],
         m_pixels_buffers[m_current_buffer] + m_world->count(),
         0xFF131313
@@ -128,15 +130,32 @@ void PixelGrid::write_world_to_pixel_buf()
         return x + (y * width);
     };
 
-    for (const auto& c : m_world->walls())
-    {
-        m_pixels_buffers[m_current_buffer][xy_to_flat_idx(c)] = 0xFFABABAB;
-    }
+    const auto fill_walls = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
+        for (const auto& c : m_world->walls())
+        {
+            buf[xy_to_flat_idx(c)] = 0xFFABABAB;
+        }
+    };
 
-    for (const auto& c : m_world->powders())
-    {
-        m_pixels_buffers[m_current_buffer][xy_to_flat_idx(c)] = 0xFF2596BE;
-    }
+    const auto fill_powders = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
+        for (const auto& c : m_world->powders())
+        {
+            buf[xy_to_flat_idx(c)] = 0xFF2596BE;
+        }
+    };
+
+    const auto fill_settled_powders =
+        [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
+            for (const auto& c : m_world->settled_powders())
+            {
+                buf[xy_to_flat_idx(c)] = 0xFF2596BE;
+            }
+        };
+
+    std::vector<std::jthread> fill_jobs;
+    fill_jobs.emplace_back(fill_walls);
+    fill_jobs.emplace_back(fill_powders);
+    fill_jobs.emplace_back(fill_settled_powders);
 }
 
 void PixelGrid::render()
