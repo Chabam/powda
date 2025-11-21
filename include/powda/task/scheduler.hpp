@@ -1,5 +1,5 @@
-#ifndef POWDA_ENGINE_HPP
-#define POWDA_ENGINE_HPP
+#ifndef POWDA_SCHEDULER_HPP
+#define POWDA_SCHEDULER_HPP
 
 #include <powda/task/scheduling_task.hpp>
 #include <powda/graphics/renderer.hpp>
@@ -27,8 +27,6 @@ class Scheduler
     Logger                      m_logger{"engine"};
 };
 
-using SchedulerPtr = std::shared_ptr<Scheduler>;
-
 } // namespace powda
 
-#endif // POWDA_ENGINE_HPP
+#endif // POWDA_SCHEDULER_HPP

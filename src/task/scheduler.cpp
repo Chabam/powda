@@ -21,21 +21,19 @@ void Scheduler::start()
     auto last_frame            = std::chrono::system_clock::now();
     auto start_fps_count_timer = std::chrono::system_clock::now();
 
-    unsigned long long frame_count = 0;
+    unsigned long long    frame_count = 0;
+    static constexpr auto task_runner = [](auto& task) {
+        task.run();
+    };
     while (!m_should_stop)
     {
         using namespace std::chrono_literals;
 
         auto before_render = std::chrono::system_clock::now();
 
-        for (auto task : m_tasks)
+        for (auto& task : m_tasks)
         {
-            std::visit(
-                [](auto&& t) {
-                    t.run();
-                },
-                task
-            );
+            std::visit(task_runner, task);
         }
         ++frame_count;
 
