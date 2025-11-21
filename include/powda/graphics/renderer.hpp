@@ -11,13 +11,13 @@ namespace powda
 class Renderer
 {
   public:
-    Renderer(const WorldPtr& world);
+    Renderer(const std::shared_ptr<World>& world);
     ~Renderer();
 
     void render();
 
   private:
-    WorldPtr m_world;
+    std::shared_ptr<World> m_world;
 
     static constexpr auto                     s_buffer_count = 2;
     std::array<GLuint, s_buffer_count>        m_pbo_ids;
@@ -29,6 +29,16 @@ class Renderer
     std::array<unsigned int*, s_buffer_count> m_pixels_buffers;
 
     void render_world();
+
+    static void handle_gl_error(
+        GLenum        source,
+        GLenum        type,
+        GLuint        id,
+        GLenum        severity,
+        GLsizei       length,
+        const GLchar* message,
+        const void*   user_param
+    );
 };
 
 } // namespace powda

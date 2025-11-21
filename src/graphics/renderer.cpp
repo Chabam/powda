@@ -39,7 +39,7 @@ void main()
 }
 )";
 
-Renderer::Renderer(const WorldPtr& world)
+Renderer::Renderer(const std::shared_ptr<World>& world)
     : m_world{world}
     , m_pbo_ids{}
     , m_tex_id{}
@@ -49,6 +49,11 @@ Renderer::Renderer(const WorldPtr& world)
     , m_current_buffer{0}
     , m_pixels_buffers{}
 {
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(handle_gl_error, nullptr);
+
+    glEnable(GL_DEPTH_TEST);
+
     glCreateTextures(GL_TEXTURE_2D, 1, &m_tex_id);
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -180,6 +185,36 @@ void Renderer::render()
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     render_world();
+}
+
+void Renderer::handle_gl_error(
+    GLenum        source,
+    GLenum        type,
+    GLuint        id,
+    GLenum        severity,
+    GLsizei       length,
+    const GLchar* message,
+    const void*   user_param
+)
+{
+    Logger::Level level;
+    switch (severity)
+    {
+    case GL_DEBUG_SEVERITY_HIGH:
+        level = Logger::Level::Error;
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        level = Logger::Level::Warn;
+        break;
+    default:
+    case GL_DEBUG_SEVERITY_LOW:
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        level = Logger::Level::Debug;
+        return;
+    }
+    Logger{"OpenGL"}.log(level, "{}", message);
+
+    throw std::runtime_error("OpenGL fatal error!");
 }
 
 } // namespace powda

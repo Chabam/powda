@@ -1,8 +1,7 @@
 #ifndef POWDA_ENGINE_HPP
 #define POWDA_ENGINE_HPP
 
-#include <glad/gl.h>
-
+#include <powda/task/scheduling_task.hpp>
 #include <powda/graphics/renderer.hpp>
 #include <powda/graphics/shader_program.hpp>
 #include <powda/graphics/window.hpp>
@@ -15,27 +14,20 @@ namespace powda
 class Scheduler
 {
   public:
-    Scheduler();
+    Scheduler(unsigned int target_fps);
 
-    void render(Window& window);
+    void start();
+    void register_task(const SchedulingTask& task);
+    void stop() { m_should_stop = true; }
 
   private:
-    unsigned int       m_target_fps;
-    unsigned long long m_frame_count;
-    WorldPtr           m_world;
-    Renderer           m_renderer;
-    Logger             m_logger{"engine"};
-
-    static void handle_gl_error(
-        GLenum        source,
-        GLenum        type,
-        GLuint        id,
-        GLenum        severity,
-        GLsizei       length,
-        const GLchar* message,
-        const void*   user_param
-    );
+    bool m_should_stop;
+    unsigned int                m_target_fps;
+    std::vector<SchedulingTask> m_tasks;
+    Logger                      m_logger{"engine"};
 };
+
+using SchedulerPtr = std::shared_ptr<Scheduler>;
 
 } // namespace powda
 
