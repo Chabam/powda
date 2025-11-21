@@ -1,9 +1,8 @@
-#include <powda/shader.hpp>
-#include <powda/shader_program.hpp>
+#include <powda/graphics/shader.hpp>
+#include <powda/graphics/shader_program.hpp>
 #include <powda/logger.hpp>
 
 #include <glad/gl.h>
-#include <iostream>
 #include <sstream>
 
 namespace powda

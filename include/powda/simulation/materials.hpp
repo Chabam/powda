@@ -1,5 +1,5 @@
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef MATERIAL_HPP
+#define MATERIAL_HPP
 
 namespace powda
 {
@@ -13,4 +13,4 @@ enum class Materials
 
 } // namespace powda
 
-#endif // MATERIAL_H
+#endif // MATERIAL_HPP

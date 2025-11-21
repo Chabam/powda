@@ -2,8 +2,8 @@
 #define POWDA_RENDERER
 
 #include <glad/gl.h>
-#include <powda/shader_program.hpp>
-#include <powda/world.hpp>
+#include <powda/graphics/shader_program.hpp>
+#include <powda/simulation/world.hpp>
 
 namespace powda
 {

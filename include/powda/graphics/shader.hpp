@@ -1,5 +1,5 @@
-#ifndef RT_SHADER_H
-#define RT_SHADER_H
+#ifndef RT_SHADER_HPP
+#define RT_SHADER_HPP
 
 #include <powda/logger.hpp>
 
@@ -40,4 +40,4 @@ class Shader
 
 } // namespace powda
 
-#endif // RT_SHADER_H
+#endif // RT_SHADER_HPP

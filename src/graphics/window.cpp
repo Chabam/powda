@@ -1,5 +1,5 @@
+#include <powda/graphics/window.hpp>
 #include <powda/logger.hpp>
-#include <powda/window.hpp>
 
 // clang-format off
 #include <glad/gl.h>

@@ -1,5 +1,5 @@
-#include <powda/window.hpp>
-#include <powda/scheduler.hpp>
+#include <powda/graphics/window.hpp>
+#include <powda/task/scheduler.hpp>
 #include "powda/logger.hpp"
 
 int main()

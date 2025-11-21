@@ -1,11 +1,11 @@
-#ifndef POWDA_WORLD_H
-#define POWDA_WORLD_H
+#ifndef POWDA_WORLD_HPP
+#define POWDA_WORLD_HPP
 
 #include <cstddef>
 #include <memory>
 #include <vector>
 
-#include <powda/materials.hpp>
+#include <powda/simulation/materials.hpp>
 
 namespace powda
 {
@@ -46,4 +46,4 @@ using WorldPtr = std::shared_ptr<World>;
 
 } // namespace powda
 
-#endif // POWDA_WORLD_H
+#endif // POWDA_WORLD_HPP

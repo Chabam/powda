@@ -4,13 +4,12 @@
 #include <memory>
 #include <stdexcept>
 
-#include <powda/scheduler.hpp>
-#include <powda/engine_component.hpp>
+#include <powda/task/scheduler.hpp>
 #include <powda/logger.hpp>
-#include <powda/shader.hpp>
-#include <powda/shader_program.hpp>
-#include <powda/time_step.hpp>
-#include "powda/materials.hpp"
+#include <powda/graphics/shader.hpp>
+#include <powda/graphics/shader_program.hpp>
+#include <powda/task/time_step.hpp>
+#include "powda/simulation/materials.hpp"
 
 #include <GLFW/glfw3.h>
 

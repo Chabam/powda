@@ -1,9 +1,9 @@
 #include <algorithm>
-#include <map>
 #include <functional>
-#include <powda/world.hpp>
-#include <powda/materials.hpp>
-#include <iostream>
+#include <map>
+
+#include <powda/simulation/materials.hpp>
+#include <powda/simulation/world.hpp>
 
 namespace powda
 {
@@ -124,7 +124,7 @@ Materials World::get(
         return Materials::Wall;
     }
 
-    auto powders_it = std::find(powders.begin(), powders.end(), c);
+    auto powders_it         = std::find(powders.begin(), powders.end(), c);
     auto settled_powders_it = std::find(settled_powders.begin(), settled_powders.end(), c);
     if (powders_it != powders.end() || settled_powders_it != settled_powders.end())
     {

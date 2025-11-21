@@ -1,13 +1,13 @@
-#ifndef POWDA_ENGINE_H
-#define POWDA_ENGINE_H
-
-#include <powda/window.hpp>
-#include <powda/logger.hpp>
+#ifndef POWDA_ENGINE_HPP
+#define POWDA_ENGINE_HPP
 
 #include <glad/gl.h>
-#include <powda/shader_program.hpp>
-#include <powda/renderer.hpp>
-#include <powda/world.hpp>
+
+#include <powda/graphics/renderer.hpp>
+#include <powda/graphics/shader_program.hpp>
+#include <powda/graphics/window.hpp>
+#include <powda/logger.hpp>
+#include <powda/simulation/world.hpp>
 
 namespace powda
 {
@@ -39,4 +39,4 @@ class Scheduler
 
 } // namespace powda
 
-#endif // POWDA_ENGINE_H
+#endif // POWDA_ENGINE_HPP

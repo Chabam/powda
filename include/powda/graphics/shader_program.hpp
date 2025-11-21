@@ -1,5 +1,5 @@
-#ifndef POWDA_SHADER_PROGRAM_H
-#define POWDA_SHADER_PROGRAM_H
+#ifndef POWDA_SHADER_PROGRAM_HPP
+#define POWDA_SHADER_PROGRAM_HPP
 
 #include <powda/logger.hpp>
 
@@ -31,4 +31,4 @@ class ShaderProgram
 
 } // namespace powda
 
-#endif // POWDA_SHADER_PROGRAM_H
+#endif // POWDA_SHADER_PROGRAM_HPP

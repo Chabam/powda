@@ -1,5 +1,5 @@
-#ifndef POWDA_TIME_STEP_H
-#define POWDA_TIME_STEP_H
+#ifndef POWDA_TIME_STEP_HPP
+#define POWDA_TIME_STEP_HPP
 
 #include <chrono>
 
@@ -14,4 +14,4 @@ struct TimeStep
 
 } // namespace powda
 
-#endif // POWDA_TIME_STEP_H
+#endif // POWDA_TIME_STEP_HPP

@@ -3,9 +3,9 @@
 #include <execution>
 #include <thread>
 
-#include <powda/renderer.hpp>
-#include <powda/shader.hpp>
-#include "powda/materials.hpp"
+#include <powda/graphics/renderer.hpp>
+#include <powda/graphics/shader.hpp>
+#include "powda/simulation/materials.hpp"
 
 namespace powda
 {

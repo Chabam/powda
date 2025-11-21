@@ -1,5 +1,5 @@
-#ifndef POWDA_WINDOW_H
-#define POWDA_WINDOW_H
+#ifndef POWDA_WINDOW_HPP
+#define POWDA_WINDOW_HPP
 
 #include <powda/logger.hpp>
 
@@ -58,4 +58,4 @@ class Window
 
 } // namespace powda
 
-#endif // POWDA_WINDOW_H
+#endif // POWDA_WINDOW_HPP

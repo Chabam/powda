@@ -1,4 +1,4 @@
-#include <powda/shader.hpp>
+#include <powda/graphics/shader.hpp>
 #include <powda/logger.hpp>
 
 #include <filesystem>

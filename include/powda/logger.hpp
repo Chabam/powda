@@ -1,5 +1,5 @@
-#ifndef POWDA_LOGGER_HPP
-#define POWDA_LOGGER_HPP
+#ifndef POWDA_LOGGER_HPPPP
+#define POWDA_LOGGER_HPPPP
 
 #include <chrono>
 #include <format>
@@ -97,4 +97,4 @@ struct Logger
 
 } // namespace powda
 
-#endif // POWDA_LOGGER_HPP
+#endif // POWDA_LOGGER_HPPPP
