@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include <glad/gl.h>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 namespace powda

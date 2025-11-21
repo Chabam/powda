@@ -3,7 +3,6 @@
 #include <powda/logger.hpp>
 
 #include <glad/gl.h>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -37,7 +36,7 @@ void ShaderProgram::link()
     glLinkProgram(m_id);
 
     GLint isLinked = 0;
-    glGetProgramiv(m_id, GL_LINK_STATUS, (int*)&isLinked);
+    glGetProgramiv(m_id, GL_LINK_STATUS, static_cast<int*>(&isLinked));
     if (isLinked == GL_FALSE)
     {
         GLint maxLength = 0;

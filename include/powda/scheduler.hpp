@@ -6,16 +6,16 @@
 
 #include <glad/gl.h>
 #include <powda/shader_program.hpp>
-#include <powda/pixel_grid.hpp>
+#include <powda/renderer.hpp>
 #include <powda/world.hpp>
 
 namespace powda
 {
 
-class Engine
+class Scheduler
 {
   public:
-    Engine();
+    Scheduler();
 
     void render(Window& window);
 
@@ -23,7 +23,7 @@ class Engine
     unsigned int       m_target_fps;
     unsigned long long m_frame_count;
     WorldPtr           m_world;
-    PixelGrid          m_pixel_grid;
+    Renderer           m_renderer;
     Logger             m_logger{"engine"};
 
     static void handle_gl_error(

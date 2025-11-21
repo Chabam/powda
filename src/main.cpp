@@ -1,5 +1,5 @@
 #include <powda/window.hpp>
-#include <powda/engine.hpp>
+#include <powda/scheduler.hpp>
 #include "powda/logger.hpp"
 
 int main()
@@ -9,6 +9,6 @@ int main()
     powda::Window::init();
     powda::Window main_window{1280, 720, "powda"};
     main_window.make_active();
-    powda::Engine engine;
+    powda::Scheduler engine;
     engine.render(main_window);
 }

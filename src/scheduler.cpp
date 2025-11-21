@@ -4,7 +4,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include <powda/engine.hpp>
+#include <powda/scheduler.hpp>
 #include <powda/engine_component.hpp>
 #include <powda/logger.hpp>
 #include <powda/shader.hpp>
@@ -17,15 +17,15 @@
 namespace powda
 {
 
-Engine::Engine()
+Scheduler::Scheduler()
     : m_target_fps{60}
     , m_frame_count{}
     , m_world{std::make_shared<World>(160, 90)}
-    , m_pixel_grid{m_world}
+    , m_renderer{m_world}
 {
 }
 
-void Engine::render(Window& window)
+void Scheduler::render(Window& window)
 {
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(handle_gl_error, nullptr);
@@ -42,7 +42,7 @@ void Engine::render(Window& window)
     }
 
     const auto middle = m_world->width() / 2;
-    const auto size = 20;
+    const auto size   = 20;
     for (size_t x = middle - size; x < middle + size; ++x)
     {
         m_world->set(x, 40, Materials::Wall);
@@ -54,10 +54,7 @@ void Engine::render(Window& window)
 
         auto before_render = std::chrono::system_clock::now();
 
-        glClearColor(0.f, 0.f, 0.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        m_pixel_grid.render();
+        m_renderer.render();
         window.update();
 
         m_world->next_step();
@@ -94,12 +91,11 @@ void Engine::render(Window& window)
             start_fps_count_timer = std::chrono::system_clock::now();
         }
 
-        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline)
-            ;
+        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline);
     }
 }
 
-void Engine::handle_gl_error(
+void Scheduler::handle_gl_error(
     GLenum        source,
     GLenum        type,
     GLuint        id,

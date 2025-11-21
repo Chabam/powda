@@ -3,7 +3,7 @@
 #include <execution>
 #include <thread>
 
-#include <powda/pixel_grid.hpp>
+#include <powda/renderer.hpp>
 #include <powda/shader.hpp>
 #include "powda/materials.hpp"
 
@@ -39,7 +39,7 @@ void main()
 }
 )";
 
-PixelGrid::PixelGrid(const WorldPtr& world)
+Renderer::Renderer(const WorldPtr& world)
     : m_world{world}
     , m_pbo_ids{}
     , m_tex_id{}
@@ -104,7 +104,7 @@ PixelGrid::PixelGrid(const WorldPtr& world)
     glEnableVertexAttribArray(1);
 }
 
-PixelGrid::~PixelGrid()
+Renderer::~Renderer()
 {
     glDeleteBuffers(1, &m_vbo);
     glDeleteVertexArrays(1, &m_vao);
@@ -116,7 +116,7 @@ PixelGrid::~PixelGrid()
     glDeleteTextures(1, &m_tex_id);
 }
 
-void PixelGrid::write_world_to_pixel_buf()
+void Renderer::render_world()
 {
     std::fill(
         std::execution::par,
@@ -158,15 +158,20 @@ void PixelGrid::write_world_to_pixel_buf()
     fill_jobs.emplace_back(fill_settled_powders);
 }
 
-void PixelGrid::render()
+void Renderer::render()
 {
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     m_shader_program.use();
 
     auto buffer_to_use = m_current_buffer;
     m_current_buffer   = (m_current_buffer + 1) % s_buffer_count;
     glBindTexture(GL_TEXTURE_2D, m_tex_id);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pbo_ids[buffer_to_use]);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_world->width(), m_world->height(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexSubImage2D(
+        GL_TEXTURE_2D, 0, 0, 0, m_world->width(), m_world->height(), GL_RGBA, GL_UNSIGNED_BYTE, 0
+    );
     glBindVertexArray(m_vao);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -174,7 +179,7 @@ void PixelGrid::render()
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-    write_world_to_pixel_buf();
+    render_world();
 }
 
 } // namespace powda

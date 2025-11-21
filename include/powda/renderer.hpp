@@ -1,5 +1,5 @@
-#ifndef POWDA_PIXEL_GRID
-#define POWDA_PIXEL_GRID
+#ifndef POWDA_RENDERER
+#define POWDA_RENDERER
 
 #include <glad/gl.h>
 #include <powda/shader_program.hpp>
@@ -8,11 +8,11 @@
 namespace powda
 {
 
-class PixelGrid
+class Renderer
 {
   public:
-    PixelGrid(const WorldPtr& world);
-    ~PixelGrid();
+    Renderer(const WorldPtr& world);
+    ~Renderer();
 
     void render();
 
@@ -28,9 +28,9 @@ class PixelGrid
     unsigned char                             m_current_buffer;
     std::array<unsigned int*, s_buffer_count> m_pixels_buffers;
 
-    void write_world_to_pixel_buf();
+    void render_world();
 };
 
 } // namespace powda
 
-#endif // POWDA_PIXEL_GRID
+#endif // POWDA_RENDERER
