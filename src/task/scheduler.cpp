@@ -32,9 +32,8 @@ void Scheduler::start()
         auto before_render = std::chrono::system_clock::now();
 
         for (auto& task : m_tasks)
-        {
             std::visit(task_runner, task);
-        }
+
         ++frame_count;
 
         TimeStep   time_step;
@@ -53,9 +52,9 @@ void Scheduler::start()
             start_fps_count_timer = std::chrono::system_clock::now();
         }
 
-        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline)
-        {
-        }
+        // clang-format off
+        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline);
+        // clang-format on
     }
 }
 

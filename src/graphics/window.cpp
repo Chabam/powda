@@ -111,7 +111,7 @@ void Window::make_active()
     m_logger.debug("glad ok!");
 }
 
-const char* Window::get_title() const
+const char* Window::title() const
 {
     return m_title;
 }
@@ -145,21 +145,22 @@ void Window::update()
     glfwPollEvents();
 }
 
-unsigned int Window::get_width() const
+unsigned int Window::width() const
 {
     return m_width;
 }
 
-unsigned int Window::get_height() const
+unsigned int Window::height() const
 {
     return m_height;
 }
 
-const Window::MouseInfo& Window::get_mouse_info() const
+const Window::MouseInfo& Window::mouse_info() const
 {
     return m_mouse_info;
 }
-const Window::KeyboardInfo& Window::get_keyboard_info() const
+
+const Window::KeyboardInfo& Window::keyboard_info() const
 {
     return m_keyboard_info;
 }

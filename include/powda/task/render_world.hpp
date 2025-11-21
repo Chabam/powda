@@ -1,11 +1,13 @@
 #ifndef POWDA_RENDER_WORLD_HPP
 #define POWDA_RENDER_WORLD_HPP
 
-#include <powda/graphics/renderer.hpp>
-#include <powda/graphics/window.hpp>
+#include <memory>
 
 namespace powda
 {
+
+class Window;
+class Renderer;
 
 class RenderWorld
 {

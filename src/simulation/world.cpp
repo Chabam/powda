@@ -13,7 +13,6 @@ World::World(unsigned int width, unsigned int height)
     , m_height{height}
     , m_material_count{m_width * m_height}
     , m_powders{}
-    , m_settled_powders{}
     , m_walls{}
 {
 }
@@ -30,7 +29,7 @@ void World::next_step()
         if (cache.contains(c))
             return cache[c];
 
-        const auto mat = get(x, y, powders, m_settled_powders, m_walls);
+        const auto mat = get(x, y, powders, m_walls);
         cache[c]       = mat;
         return mat;
     };
@@ -74,7 +73,7 @@ void World::next_step()
         }
         else if (below == Materials::Wall || below == Materials::Powder)
         {
-            m_settled_powders.emplace_back(x, y);
+            m_powders.emplace_back(x, y);
         }
     }
 }
@@ -106,14 +105,13 @@ void World::set(unsigned int x, unsigned int y, Materials mat)
 
 Materials World::get(unsigned int x, unsigned int y) const
 {
-    return get(x, y, m_powders, m_settled_powders, m_walls);
+    return get(x, y, m_powders, m_walls);
 }
 
 Materials World::get(
     unsigned int   x,
     unsigned int   y,
     const Powders& powders,
-    const Powders& settled_powders,
     const Walls&   walls
 ) const
 {
@@ -125,8 +123,7 @@ Materials World::get(
     }
 
     auto powders_it         = std::find(powders.begin(), powders.end(), c);
-    auto settled_powders_it = std::find(settled_powders.begin(), settled_powders.end(), c);
-    if (powders_it != powders.end() || settled_powders_it != settled_powders.end())
+    if (powders_it != powders.end())
     {
         return Materials::Powder;
     }

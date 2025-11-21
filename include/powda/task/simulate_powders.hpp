@@ -1,20 +1,22 @@
 #ifndef POWDA_SIMULATE_POWDERS_HPP
 #define POWDA_SIMULATE_POWDERS_HPP
 
-#include <powda/simulation/world.hpp>
+#include <memory>
 
 namespace powda
 {
 
+class World;
+
 class SimulatePowders
 {
   public:
-    SimulatePowders(const WorldPtr& world);
+    SimulatePowders(const std::shared_ptr<World>& world);
 
     void run();
 
   private:
-    WorldPtr m_world;
+    std::shared_ptr<World> m_world;
 };
 
 } // namespace powda

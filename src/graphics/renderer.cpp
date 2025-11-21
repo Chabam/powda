@@ -149,18 +149,10 @@ void Renderer::render_world()
         }
     };
 
-    const auto fill_settled_powders =
-        [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
-            for (const auto& c : m_world->settled_powders())
-            {
-                buf[xy_to_flat_idx(c)] = 0xFF2596BE;
-            }
-        };
 
     std::vector<std::jthread> fill_jobs;
     fill_jobs.emplace_back(fill_walls);
     fill_jobs.emplace_back(fill_powders);
-    fill_jobs.emplace_back(fill_settled_powders);
 }
 
 void Renderer::render()

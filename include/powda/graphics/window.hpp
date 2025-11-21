@@ -24,10 +24,10 @@ class Window
     void         close();
     bool         should_close();
     void         set_title(const char* title);
-    const char*  get_title() const;
+    const char*  title() const;
     void         set_size(int width, int height);
-    unsigned int get_width() const;
-    unsigned int get_height() const;
+    unsigned int width() const;
+    unsigned int height() const;
 
     struct MouseInfo
     {
@@ -41,8 +41,8 @@ class Window
         std::vector<int> m_current_pressed_keys;
     };
 
-    const MouseInfo&    get_mouse_info() const;
-    const KeyboardInfo& get_keyboard_info() const;
+    const MouseInfo&    mouse_info() const;
+    const KeyboardInfo& keyboard_info() const;
 
   private:
     Logger       m_logger{"Window"};

@@ -1,8 +1,13 @@
+#include <powda/graphics/renderer.hpp>
+#include <powda/graphics/window.hpp>
 #include <powda/task/render_world.hpp>
 
 namespace powda
 {
-RenderWorld::RenderWorld(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Window>& window)
+
+RenderWorld::RenderWorld(
+    const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Window>& window
+)
     : m_renderer{renderer}
     , m_window{window}
 {
