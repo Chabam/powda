@@ -36,16 +36,10 @@ World::World(unsigned int width, unsigned int height)
 
 void World::next_step()
 {
-    const auto sort_by_y = [](const auto& lhs, const auto& rhs) -> bool {
-        return std::get<1>(lhs) < std::get<1>(rhs);
-    };
-
     auto current_powders{m_powders};
-    std::sort(current_powders.begin(), current_powders.end(), sort_by_y);
     m_powders.clear();
 
     auto current_liquids{m_liquids};
-    std::sort(current_liquids.begin(), current_liquids.end(), sort_by_y);
     m_liquids.clear();
 
     using Cache       = std::map<coord, Materials>;
