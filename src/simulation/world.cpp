@@ -1,132 +1,248 @@
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <map>
+#include <type_traits>
 
 #include <powda/simulation/materials.hpp>
 #include <powda/simulation/world.hpp>
+#include <powda/logger.hpp>
 
 namespace powda
 {
+const char* material_to_string(Materials mat) {
+    switch (mat)
+    {
+    case powda::Materials::Liquid:
+        return "Liquid";
+    case powda::Materials::Powder:
+        return "Powder";
+    case powda::Materials::Wall:
+        return "Wall";
+    default:
+        return "Empty";
+    }
+}
 
 World::World(unsigned int width, unsigned int height)
     : m_width{width}
     , m_height{height}
     , m_material_count{m_width * m_height}
     , m_powders{}
+    , m_liquids{}
     , m_walls{}
 {
 }
 
 void World::next_step()
 {
-    const auto snapshot_powders{m_powders};
+    const auto sort_by_y = [](const auto& lhs, const auto& rhs) -> bool {
+        return std::get<1>(lhs) < std::get<1>(rhs);
+    };
+
+    auto current_powders{m_powders};
+    std::sort(current_powders.begin(), current_powders.end(), sort_by_y);
     m_powders.clear();
 
-    using Cache = std::map<coord, Materials>;
-    const auto lookup =
-        [this](unsigned int x, unsigned int y, Cache& cache, const Powders& powders) -> Materials {
+    auto current_liquids{m_liquids};
+    std::sort(current_liquids.begin(), current_liquids.end(), sort_by_y);
+    m_liquids.clear();
+
+    using Cache       = std::map<coord, Materials>;
+    const auto lookup = [this](
+                            unsigned int              x,
+                            unsigned int              y,
+                            Cache&                    cache,
+                            const std::vector<coord>& powders,
+                            const std::vector<coord>& liquids
+                        ) -> Materials {
         const coord c{x, y};
         if (cache.contains(c))
             return cache[c];
 
-        const auto mat = get(x, y, powders, m_walls);
+        const auto mat = get(x, y, powders, liquids, m_walls);
         cache[c]       = mat;
         return mat;
     };
 
-    Cache snapshot_cache;
-    Cache future_cache;
+    Cache current_cache;
+    Cache next_cache;
     using namespace std::placeholders;
-    auto lookup_snapshot =
-        std::bind(lookup, _1, _2, std::ref(snapshot_cache), std::cref(snapshot_powders));
-    auto lookup_future = std::bind(lookup, _1, _2, std::ref(future_cache), std::cref(m_powders));
+    auto lookup_next =
+        std::bind(lookup, _1, _2, std::ref(next_cache), std::cref(m_powders), std::cref(m_liquids));
+    auto lookup_current = std::bind(
+        lookup,
+        _1,
+        _2,
+        std::ref(current_cache),
+        std::cref(current_powders),
+        std::cref(current_liquids)
+    );
 
-    for (const auto [x, y] : snapshot_powders)
+    auto set_new_material =
+        [&next_cache](auto& materials, unsigned int x, unsigned int y, Materials mat) {
+            materials.emplace_back(x, y);
+            next_cache[{x, y}] = mat;
+        };
+
+    for (const auto [x, y] : current_powders)
     {
         const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
-        const auto below       = lookup_snapshot(x, down_offset);
+        const auto below       = lookup_current(x, down_offset);
 
-        if (below == Materials::Empty || lookup_future(x, down_offset) == Materials::Empty)
+        if (below == Materials::Empty || lookup_next(x, down_offset) == Materials::Empty)
         {
-            if (below != Materials::Empty)
-                future_cache[{x, down_offset}] = Materials::Powder;
-
-            m_powders.emplace_back(x, down_offset);
+            set_new_material(m_powders, x, down_offset, Materials::Powder);
             continue;
         }
 
         const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
         const auto right_offset = std::min(x + 1, m_width - 1);
 
-        const auto left        = lookup_snapshot(left_offset, y);
-        const auto right       = lookup_snapshot(right_offset, y);
-        const auto below_left  = lookup_snapshot(left_offset, down_offset);
-        const auto below_right = lookup_snapshot(right_offset, down_offset);
+        const auto left        = lookup_current(left_offset, y);
+        const auto right       = lookup_current(right_offset, y);
+        const auto below_left  = lookup_current(left_offset, down_offset);
+        const auto below_right = lookup_current(right_offset, down_offset);
 
         if (right == Materials::Empty && below_right == Materials::Empty)
         {
-            m_powders.emplace_back(right_offset, down_offset);
+            set_new_material(m_powders, right_offset, down_offset, Materials::Powder);
         }
         else if (left == Materials::Empty && below_left == Materials::Empty)
         {
-            m_powders.emplace_back(left_offset, down_offset);
+            set_new_material(m_powders, left_offset, down_offset, Materials::Powder);
         }
-        else if (below == Materials::Wall || below == Materials::Powder)
+        else if (below != Materials::Empty)
         {
-            m_powders.emplace_back(x, y);
+            set_new_material(m_powders, x, y, Materials::Powder);
         }
     }
+
+    assert(m_powders.size() == current_powders.size());
+
+    for (const auto [x, y] : current_liquids)
+    {
+        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
+        const auto below       = lookup_current(x, down_offset);
+
+        if (below == Materials::Empty || lookup_next(x, down_offset) == Materials::Empty)
+        {
+            set_new_material(m_liquids, x, down_offset, Materials::Liquid);
+            continue;
+        }
+
+        const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
+        const auto right_offset = std::min(x + 1, m_width - 1);
+
+        const auto left        = lookup_current(left_offset, y);
+        const auto right       = lookup_current(right_offset, y);
+        const auto below_left  = lookup_current(left_offset, down_offset);
+        const auto below_right = lookup_current(right_offset, down_offset);
+
+        if (right == Materials::Empty && below_right == Materials::Empty)
+        {
+            set_new_material(m_liquids, right_offset, down_offset, Materials::Liquid);
+        }
+        else if (left == Materials::Empty && below_left == Materials::Empty)
+        {
+            set_new_material(m_liquids, left_offset, y, Materials::Liquid);
+        }
+        else if (right == Materials::Empty && lookup_next(right_offset, y) == Materials::Empty)
+        {
+            set_new_material(m_liquids, right_offset, y, Materials::Liquid);
+        }
+        else if (left == Materials::Empty && lookup_next(left_offset, y) == Materials::Empty)
+        {
+            set_new_material(m_liquids, left_offset, y, Materials::Liquid);
+        }
+        else if (below != Materials::Empty)
+        {
+            set_new_material(m_liquids, x, y, Materials::Liquid);
+        }
+    }
+
+    assert(m_liquids.size() == current_liquids.size());
 }
 
 void World::set(unsigned int x, unsigned int y, Materials mat)
 {
+    Logger     logger{"World set"};
+    // logger.debug("set {}, {}, {}", x, y, material_to_string(mat));
+    const auto set_material = [this, &logger](const coord& c, Materials mat) {
+        if (mat == Materials::Powder)
+            m_powders.push_back(c);
+        else if (mat == Materials::Liquid)
+            m_liquids.push_back(c);
+        else if (mat == Materials::Wall)
+            m_walls.push_back(c);
+        logger.debug("Powders count {}", m_powders.size());
+        logger.debug("Liquids count {}", m_liquids.size());
+        logger.debug("Walls count {}", m_walls.size());
+    };
+
     coord c{x, y};
     auto  walls_it = std::find(m_walls.begin(), m_walls.end(), c);
-    if (walls_it != m_walls.end() && mat != Materials::Wall)
+    if (walls_it != m_walls.end())
     {
+        if (mat == Materials::Wall)
+            return;
+
         m_walls.erase(walls_it);
+        set_material(c, mat);
+        return;
     }
 
     auto powders_it = std::find(m_powders.begin(), m_powders.end(), c);
-    if (powders_it != m_powders.end() && mat != Materials::Powder)
+    if (powders_it != m_powders.end())
     {
+        if (mat == Materials::Powder)
+            return;
+
         m_powders.erase(powders_it);
+        set_material(c, mat);
+        return;
     }
 
-    if (mat == Materials::Powder)
+    auto liquids_it = std::find(m_liquids.begin(), m_liquids.end(), c);
+    if (liquids_it != m_liquids.end())
     {
-        m_powders.push_back(c);
+        if (mat == Materials::Liquid)
+            return;
+
+        m_liquids.erase(liquids_it);
+        set_material(c, mat);
+        return;
     }
-    else if (mat == Materials::Wall)
-    {
-        m_walls.push_back(c);
-    }
+
+    set_material(c, mat);
 }
 
 Materials World::get(unsigned int x, unsigned int y) const
 {
-    return get(x, y, m_powders, m_walls);
+    return get(x, y, m_powders, m_liquids, m_walls);
 }
 
 Materials World::get(
-    unsigned int   x,
-    unsigned int   y,
-    const Powders& powders,
-    const Walls&   walls
+    unsigned int              x,
+    unsigned int              y,
+    const std::vector<coord>& powders,
+    const std::vector<coord>& liquids,
+    const std::vector<coord>& walls
 ) const
 {
-    coord c{x, y};
-    auto  walls_it = std::find(walls.begin(), walls.end(), c);
-    if (walls_it != walls.end())
-    {
-        return Materials::Wall;
-    }
+    coord      c{x, y};
+    const auto is_material = [&c](const auto& materials) {
+        return std::find(materials.begin(), materials.end(), c) != materials.end();
+    };
 
-    auto powders_it         = std::find(powders.begin(), powders.end(), c);
-    if (powders_it != powders.end())
-    {
+    if (is_material(walls))
+        return Materials::Wall;
+
+    if (is_material(powders))
         return Materials::Powder;
-    }
+
+    if (is_material(liquids))
+        return Materials::Liquid;
 
     return Materials::Empty;
 }

@@ -51,6 +51,12 @@ void HandleInputs::run()
             m_selected_material = Materials::Wall;
             m_logger.debug("Wall selected");
         }
+
+        if (pressed_key == GLFW_KEY_3)
+        {
+            m_selected_material = Materials::Liquid;
+            m_logger.debug("Liquid selected");
+        }
     }
 
     auto mouse_info = m_window->mouse_info();

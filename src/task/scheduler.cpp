@@ -52,13 +52,20 @@ void Scheduler::start()
             start_fps_count_timer = std::chrono::system_clock::now();
         }
 
-        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline)
+        const auto deadline_reached = [&time_step]() {
+            return std::chrono::system_clock::now() >= time_step.m_next_frame_deadline;
+        };
+        while (!deadline_reached())
         {
             for (auto& task : m_background_tasks)
             {
                 std::visit(task_runner, task);
+
                 if (m_should_stop)
                     return;
+
+                if (deadline_reached())
+                    break;
             }
         }
     }

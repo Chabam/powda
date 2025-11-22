@@ -18,7 +18,7 @@ int main()
     std::shared_ptr<Renderer>  renderer = std::make_shared<Renderer>(world);
 
     sched->register_render_task(RenderWorld{renderer, main_window});
-    sched->register_background_task(SimulatePowders{world});
+    sched->register_render_task(SimulatePowders{world});
     sched->register_background_task(HandleInputs{main_window, sched, world});
     sched->start();
 }

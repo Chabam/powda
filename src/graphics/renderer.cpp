@@ -74,7 +74,7 @@ Renderer::Renderer(const std::shared_ptr<World>& world)
             glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, data_size, buffer_mask)
         );
 
-        std::fill(ptr, ptr + m_world->count(), 0x131313);
+        std::fill(ptr, ptr + m_world->count(), 0xFF131313);
         m_pixels_buffers[i] = ptr;
     }
 
@@ -149,10 +149,17 @@ void Renderer::render_world()
         }
     };
 
+    const auto fill_liquids = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
+        for (const auto& c : m_world->liquids())
+        {
+            buf[xy_to_flat_idx(c)] = 0xFFA81200;
+        }
+    };
 
     std::vector<std::jthread> fill_jobs;
     fill_jobs.emplace_back(fill_walls);
     fill_jobs.emplace_back(fill_powders);
+    fill_jobs.emplace_back(fill_liquids);
 }
 
 void Renderer::render()

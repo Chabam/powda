@@ -27,21 +27,22 @@ class World
 
     const std::vector<coord>& powders() const { return m_powders; }
     const std::vector<coord>& walls() const { return m_walls; }
+    const std::vector<coord>& liquids() const { return m_liquids; }
 
   private:
-    using Walls = std::vector<coord>;
-    using Powders = std::vector<coord>;
-    unsigned int             m_width;
-    unsigned int             m_height;
-    size_t                   m_material_count;
-    Powders                  m_powders;
-    Walls                    m_walls;
+    unsigned int       m_width;
+    unsigned int       m_height;
+    size_t             m_material_count;
+    std::vector<coord> m_powders;
+    std::vector<coord> m_liquids;
+    std::vector<coord> m_walls;
 
     Materials get(
-        unsigned int   x,
-        unsigned int   y,
-        const Powders& powders,
-        const Walls&   walls
+        unsigned int              x,
+        unsigned int              y,
+        const std::vector<coord>& powders,
+        const std::vector<coord>& liquids,
+        const std::vector<coord>& walls
     ) const;
 };
 

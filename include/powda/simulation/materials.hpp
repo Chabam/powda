@@ -8,6 +8,7 @@ enum class Materials
 {
     Empty,
     Powder,
+    Liquid,
     Wall
 };
 
