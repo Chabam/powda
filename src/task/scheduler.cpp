@@ -31,7 +31,7 @@ void Scheduler::start()
 
         auto before_render = std::chrono::system_clock::now();
 
-        for (auto& task : m_tasks)
+        for (auto& task : m_render_tasks)
             std::visit(task_runner, task);
 
         ++frame_count;
@@ -52,15 +52,26 @@ void Scheduler::start()
             start_fps_count_timer = std::chrono::system_clock::now();
         }
 
-        // clang-format off
-        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline);
-        // clang-format on
+        while (std::chrono::system_clock::now() < time_step.m_next_frame_deadline)
+        {
+            for (auto& task : m_background_tasks)
+            {
+                std::visit(task_runner, task);
+                if (m_should_stop)
+                    return;
+            }
+        }
     }
 }
 
-void Scheduler::register_task(const SchedulingTask& task)
+void Scheduler::register_render_task(const SchedulingTask& task)
 {
-    m_tasks.push_back(task);
+    m_render_tasks.push_back(task);
+}
+
+void Scheduler::register_background_task(const SchedulingTask& task)
+{
+    m_background_tasks.push_back(task);
 }
 
 } // namespace powda

@@ -17,13 +17,15 @@ class Scheduler
     Scheduler(unsigned int target_fps);
 
     void start();
-    void register_task(const SchedulingTask& task);
+    void register_render_task(const SchedulingTask& task);
+    void register_background_task(const SchedulingTask& task);
     void stop() { m_should_stop = true; }
 
   private:
     bool m_should_stop;
     unsigned int                m_target_fps;
-    std::vector<SchedulingTask> m_tasks;
+    std::vector<SchedulingTask> m_render_tasks;
+    std::vector<SchedulingTask> m_background_tasks;
     Logger                      m_logger{"engine"};
 };
 
