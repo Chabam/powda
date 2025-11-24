@@ -1,5 +1,5 @@
-#ifndef MATERIAL_HPP
-#define MATERIAL_HPP
+#ifndef MATERIALS_HPP
+#define MATERIALS_HPP
 
 namespace powda
 {

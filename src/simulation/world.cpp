@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <functional>
+#include <iterator>
 #include <map>
 #include <type_traits>
 
@@ -73,20 +74,42 @@ void World::next_step()
         std::cref(current_liquids)
     );
 
-    auto set_new_material =
+    auto set_next_material =
         [&next_cache](auto& materials, unsigned int x, unsigned int y, Materials mat) {
             materials.emplace_back(x, y);
             next_cache[{x, y}] = mat;
         };
 
+    auto is_empty = [](std::initializer_list<Materials> range) -> bool {
+        return std::all_of(
+            range.begin(), range.end(), std::bind(std::equal_to<Materials>{}, _1, Materials::Empty)
+        );
+    };
+
     for (const auto [x, y] : current_powders)
     {
         const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
         const auto below       = lookup_current(x, down_offset);
-
-        if (below == Materials::Empty || lookup_next(x, down_offset) == Materials::Empty)
+        const auto below_next  = lookup_next(x, down_offset);
+        if (y == 0)
         {
-            set_new_material(m_powders, x, down_offset, Materials::Powder);
+            set_next_material(m_powders, x, y, Materials::Powder);
+            continue;
+        }
+
+        if (is_empty({below, below_next}))
+        {
+            set_next_material(m_powders, x, down_offset, Materials::Powder);
+            continue;
+        }
+
+        if (below == Materials::Liquid)
+        {
+            set_next_material(m_powders, x, down_offset, Materials::Powder);
+            set_next_material(m_liquids, x, y, Materials::Liquid);
+            current_liquids.erase(
+                std::find(current_liquids.begin(), current_liquids.end(), coord{x, down_offset})
+            );
             continue;
         }
 
@@ -98,30 +121,34 @@ void World::next_step()
         const auto below_left  = lookup_current(left_offset, down_offset);
         const auto below_right = lookup_current(right_offset, down_offset);
 
-        if (right == Materials::Empty && below_right == Materials::Empty)
+        const auto right_next       = lookup_next(right_offset, y);
+        const auto left_next        = lookup_next(left_offset, y);
+        const auto below_left_next  = lookup_next(left_offset, down_offset);
+        const auto below_right_next = lookup_next(right_offset, down_offset);
+
+        if (is_empty({left, left_next, below_left, below_left_next}))
         {
-            set_new_material(m_powders, right_offset, down_offset, Materials::Powder);
+            set_next_material(m_powders, left_offset, down_offset, Materials::Powder);
         }
-        else if (left == Materials::Empty && below_left == Materials::Empty)
+        else if (is_empty({right, right_next, below_right, below_right_next}))
         {
-            set_new_material(m_powders, left_offset, down_offset, Materials::Powder);
+            set_next_material(m_powders, right_offset, down_offset, Materials::Powder);
         }
-        else if (below != Materials::Empty)
+        else
         {
-            set_new_material(m_powders, x, y, Materials::Powder);
+            set_next_material(m_powders, x, y, Materials::Powder);
         }
     }
-
-    assert(m_powders.size() == current_powders.size());
 
     for (const auto [x, y] : current_liquids)
     {
         const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
         const auto below       = lookup_current(x, down_offset);
+        const auto below_next  = lookup_next(x, down_offset);
 
-        if (below == Materials::Empty || lookup_next(x, down_offset) == Materials::Empty)
+        if (y != 0 && is_empty({below, below_next}))
         {
-            set_new_material(m_liquids, x, down_offset, Materials::Liquid);
+            set_next_material(m_liquids, x, down_offset, Materials::Liquid);
             continue;
         }
 
@@ -133,45 +160,44 @@ void World::next_step()
         const auto below_left  = lookup_current(left_offset, down_offset);
         const auto below_right = lookup_current(right_offset, down_offset);
 
-        if (right == Materials::Empty && below_right == Materials::Empty)
+        const auto right_next       = lookup_next(right_offset, y);
+        const auto left_next        = lookup_next(left_offset, y);
+        const auto below_left_next  = lookup_next(left_offset, down_offset);
+        const auto below_right_next = lookup_next(right_offset, down_offset);
+
+
+        if (y != 0 && is_empty({right, right_next, below_right, below_right_next}))
         {
-            set_new_material(m_liquids, right_offset, down_offset, Materials::Liquid);
+            set_next_material(m_liquids, right_offset, down_offset, Materials::Liquid);
         }
-        else if (left == Materials::Empty && below_left == Materials::Empty)
+        else if (y != 0 && is_empty({left, left_next, below_left, below_left_next}))
         {
-            set_new_material(m_liquids, left_offset, y, Materials::Liquid);
+            set_next_material(m_liquids, left_offset, down_offset, Materials::Liquid);
         }
-        else if (right == Materials::Empty && lookup_next(right_offset, y) == Materials::Empty)
+        else if (is_empty({right, right_next}))
         {
-            set_new_material(m_liquids, right_offset, y, Materials::Liquid);
+            set_next_material(m_liquids, right_offset, y, Materials::Liquid);
         }
-        else if (left == Materials::Empty && lookup_next(left_offset, y) == Materials::Empty)
+        else if (is_empty({left, left_next}))
         {
-            set_new_material(m_liquids, left_offset, y, Materials::Liquid);
+            set_next_material(m_liquids, left_offset, y, Materials::Liquid);
         }
-        else if (below != Materials::Empty)
+        else
         {
-            set_new_material(m_liquids, x, y, Materials::Liquid);
+            set_next_material(m_liquids, x, y, Materials::Liquid);
         }
     }
-
-    assert(m_liquids.size() == current_liquids.size());
 }
 
 void World::set(unsigned int x, unsigned int y, Materials mat)
 {
-    Logger     logger{"World set"};
-    // logger.debug("set {}, {}, {}", x, y, material_to_string(mat));
-    const auto set_material = [this, &logger](const coord& c, Materials mat) {
+    const auto set_material = [this](const coord& c, Materials mat) {
         if (mat == Materials::Powder)
             m_powders.push_back(c);
         else if (mat == Materials::Liquid)
             m_liquids.push_back(c);
         else if (mat == Materials::Wall)
             m_walls.push_back(c);
-        logger.debug("Powders count {}", m_powders.size());
-        logger.debug("Liquids count {}", m_liquids.size());
-        logger.debug("Walls count {}", m_walls.size());
     };
 
     coord c{x, y};
@@ -211,34 +237,34 @@ void World::set(unsigned int x, unsigned int y, Materials mat)
     set_material(c, mat);
 }
 
-Materials World::get(unsigned int x, unsigned int y) const
-{
-    return get(x, y, m_powders, m_liquids, m_walls);
-}
+    Materials World::get(unsigned int x, unsigned int y) const
+    {
+        return get(x, y, m_powders, m_liquids, m_walls);
+    }
 
-Materials World::get(
-    unsigned int              x,
-    unsigned int              y,
-    const std::vector<coord>& powders,
-    const std::vector<coord>& liquids,
-    const std::vector<coord>& walls
-) const
-{
-    coord      c{x, y};
-    const auto is_material = [&c](const auto& materials) {
-        return std::find(materials.begin(), materials.end(), c) != materials.end();
-    };
+    Materials World::get(
+        unsigned int              x,
+        unsigned int              y,
+        const std::vector<coord>& powders,
+        const std::vector<coord>& liquids,
+        const std::vector<coord>& walls
+    ) const
+    {
+        coord      c{x, y};
+        const auto is_material = [&c](const auto& materials) {
+            return std::find(materials.begin(), materials.end(), c) != materials.end();
+        };
 
-    if (is_material(walls))
-        return Materials::Wall;
+        if (is_material(walls))
+            return Materials::Wall;
 
-    if (is_material(powders))
-        return Materials::Powder;
+        if (is_material(powders))
+            return Materials::Powder;
 
-    if (is_material(liquids))
-        return Materials::Liquid;
+        if (is_material(liquids))
+            return Materials::Liquid;
 
-    return Materials::Empty;
-}
+        return Materials::Empty;
+    }
 
 } // namespace powda
