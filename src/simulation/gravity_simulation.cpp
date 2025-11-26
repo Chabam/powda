@@ -22,11 +22,11 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
         unsigned int y = i / m_world->width();
         if (mat.m_type == Material::Type::Powder)
         {
-            m_powders.emplace_back(x, y);
+            m_powders.emplace(x, y);
         }
         else if (mat.m_type == Material::Type::Liquid)
         {
-            m_liquids.emplace_back(x, y);
+            m_liquids.emplace(x, y);
         }
         ++i;
     }
@@ -35,17 +35,30 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
 void GravitySimulation::next()
 {
     World new_world{*m_world};
-    auto  current_powders{m_powders};
-    m_powders.clear();
 
-    auto current_liquids{m_liquids};
-    m_liquids.clear();
-
-    for (const auto [x, y] : current_powders)
-    {
-        const auto current     = m_world->get(x, y);
+    std::set<coord> cells_to_check;
+    auto            update_surrounding = [this, &cells_to_check](unsigned int x, unsigned int y) {
         const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
-        const auto below       = m_world->get(x, down_offset);
+        constexpr auto size = 2;
+        for (int dx = -size; dx != size; ++dx)
+        {
+            const auto hor_offset =
+                std::clamp(static_cast<int>(x) + dx, 0, static_cast<int>(m_world->width() - 1));
+            for (int dy = -size; dy != size; ++dy)
+            {
+                const auto ver_offset = std::clamp(
+                    static_cast<int>(y) + dy, 0, static_cast<int>(m_world->height() - 1)
+                );
+                cells_to_check.emplace(hor_offset, ver_offset);
+            }
+        }
+    };
+
+    for (const auto [x, y] : m_powders)
+    {
+        auto&       current     = new_world.get(x, y);
+        const auto  down_offset = std::max(static_cast<int>(y) - 1, 0);
+        const auto& below       = m_world->get(x, down_offset);
         if (y == 0)
         {
             continue;
@@ -53,8 +66,8 @@ void GravitySimulation::next()
 
         if (below.m_type == Material::Type::Empty || below.m_type == Material::Type::Liquid)
         {
-            std::swap(new_world.get(x, y), new_world.get(x, down_offset));
-            m_powders.emplace_back(x, down_offset);
+            std::swap(current, new_world.get(x, down_offset));
+            update_surrounding(x, down_offset);
             continue;
         }
 
@@ -68,30 +81,28 @@ void GravitySimulation::next()
 
         if (left.m_type == Material::Type::Empty && below_left.m_type == Material::Type::Empty)
         {
-            std::swap(new_world.get(x, y), new_world.get(left_offset, down_offset));
-            m_powders.emplace_back(left_offset, down_offset);
+            std::swap(current, new_world.get(left_offset, down_offset));
+            update_surrounding(left_offset, down_offset);
         }
-        else if (right.m_type == Material::Type::Empty && below_right.m_type == Material::Type::Empty)
+        else if (right.m_type == Material::Type::Empty &&
+                 below_right.m_type == Material::Type::Empty)
         {
-            std::swap(new_world.get(x, y), new_world.get(right_offset, down_offset));
-            m_powders.emplace_back(right_offset, down_offset);
+            std::swap(current, new_world.get(right_offset, down_offset));
+            update_surrounding(right_offset, down_offset);
         }
     }
 
-    for (const auto [x, y] : current_liquids)
+    std::set<coord> new_liquids;
+    for (const auto [x, y] : m_liquids)
     {
-        const auto current     = m_world->get(x, y);
-        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
-        const auto below       = m_world->get(x, down_offset);
-        if (y == 0)
-        {
-            continue;
-        }
+        auto&       current     = new_world.get(x, y);
+        const auto  down_offset = std::max(static_cast<int>(y) - 1, 0);
+        const auto& below       = m_world->get(x, down_offset);
 
-        if (below.m_type == Material::Type::Empty)
+        if (y != 0 && below.m_type == Material::Type::Empty)
         {
-            std::swap(new_world.get(x, y), new_world.get(x, down_offset));
-            m_liquids.emplace_back(x, down_offset);
+            std::swap(current, new_world.get(x, down_offset));
+            update_surrounding(x, down_offset);
             continue;
         }
 
@@ -103,29 +114,30 @@ void GravitySimulation::next()
         const auto& below_left  = m_world->get(left_offset, down_offset);
         const auto& below_right = m_world->get(right_offset, down_offset);
 
-        if (left.m_type == Material::Type::Empty && below_left.m_type == Material::Type::Empty)
+        if (right.m_type == Material::Type::Empty)
         {
-            std::swap(new_world.get(x, y), new_world.get(left_offset, down_offset));
-            m_liquids.emplace_back(left_offset, down_offset);
-        }
-        else if (right.m_type == Material::Type::Empty && below_right.m_type == Material::Type::Empty)
-        {
-            std::swap(new_world.get(x, y), new_world.get(right_offset, down_offset));
-            m_liquids.emplace_back(right_offset, down_offset);
+            std::swap(current, new_world.get(right_offset, y));
+            update_surrounding(right_offset, y);
         }
         else if (left.m_type == Material::Type::Empty)
         {
-            std::swap(new_world.get(x, y), new_world.get(left_offset, y));
-            m_liquids.emplace_back(left_offset, y);
-        }
-        else if (right.m_type == Material::Type::Empty)
-        {
-            std::swap(new_world.get(x, y), new_world.get(right_offset, y));
-            m_liquids.emplace_back(right_offset, y);
+            std::swap(current, new_world.get(left_offset, y));
+            update_surrounding(left_offset, y);
         }
     }
 
     *m_world = new_world;
+    m_powders.clear();
+    m_liquids.clear();
+    for (const auto& coord : cells_to_check)
+    {
+        auto [x, y]          = coord;
+        const auto& material = m_world->get(x, y);
+        if (material.m_type == Material::Type::Powder)
+            m_powders.emplace(coord);
+        else if (material.m_type == Material::Type::Liquid)
+            m_liquids.emplace(coord);
+    }
 }
 
 } // namespace powda

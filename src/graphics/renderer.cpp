@@ -137,6 +137,8 @@ void Renderer::render_world()
                 return 0xFF2596BE;
             case Material::Type::Liquid:
                 return 0xFFA81200;
+            case Material::Type::Wall:
+                return 0xFFABABAB;
             default:
                 return 0xFF131313;
             }

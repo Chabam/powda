@@ -14,9 +14,9 @@ int main()
     std::shared_ptr<Window> main_window = std::make_shared<Window>(1280, 720, "powda");
     main_window->make_active();
 
-    auto world = std::make_shared<World>(160, 90);
-    auto sched    = std::make_shared<Scheduler>(60);
-    auto renderer = std::make_shared<Renderer>(world);
+    auto world              = std::make_shared<World>(160, 90);
+    auto sched              = std::make_shared<Scheduler>(60);
+    auto renderer           = std::make_shared<Renderer>(world);
     auto gravity_simulation = std::make_shared<GravitySimulation>(world);
 
     sched->register_background_task(RenderWorld{renderer, main_window});
@@ -24,4 +24,3 @@ int main()
     sched->register_background_task(HandleInputs{main_window, sched, world, gravity_simulation});
     sched->start();
 }
-
