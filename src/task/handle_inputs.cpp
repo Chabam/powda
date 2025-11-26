@@ -61,6 +61,12 @@ void HandleInputs::run()
             m_selected_material = Material::Type::Liquid;
             m_logger.debug("Liquid selected");
         }
+
+        if (pressed_key == GLFW_KEY_4)
+        {
+            m_selected_material = Material::Type::Gas;
+            m_logger.debug("Gas selected");
+        }
     }
 
     auto mouse_info = m_window->mouse_info();
@@ -91,6 +97,9 @@ void HandleInputs::run()
             m_gravity_simulation->add_powder(x_idx, y_idx);
         else if (m_selected_material == Material::Type::Liquid)
             m_gravity_simulation->add_liquid(x_idx, y_idx);
+        else if (m_selected_material == Material::Type::Gas)
+            m_gravity_simulation->add_gas(x_idx, y_idx);
+
 
         m_world->set(x_idx, y_idx, m_selected_material);
     }

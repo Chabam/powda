@@ -14,6 +14,7 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
     : m_world{world}
     , m_powders{}
     , m_liquids{}
+    , m_gasses{}
 {
     size_t i = 0;
     for (const auto& mat : *m_world)
@@ -114,10 +115,66 @@ void GravitySimulation::next()
         const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
         const auto right_offset = std::min(x + 1, m_world->width() - 1);
 
-        const auto& left        = m_world->get(left_offset, y);
-        const auto& right       = m_world->get(right_offset, y);
-        const auto& below_left  = m_world->get(left_offset, down_offset);
-        const auto& below_right = m_world->get(right_offset, down_offset);
+        const auto& left  = m_world->get(left_offset, y);
+        const auto& right = m_world->get(right_offset, y);
+
+        if (right.m_type == Material::Type::Empty && left.m_type == Material::Type::Empty &&
+            current.m_current_inertia)
+        {
+            if (*current.m_current_inertia == Material::Direction::Right)
+            {
+                std::swap(current, new_world.get(right_offset, y));
+                update_surrounding(right_offset, y);
+            }
+            else if (*current.m_current_inertia == Material::Direction::Left)
+            {
+                std::swap(current, new_world.get(left_offset, y));
+                update_surrounding(left_offset, y);
+            }
+        }
+        else if (right.m_type == Material::Type::Empty)
+        {
+            current.m_current_inertia = {Material::Direction::Right};
+            std::swap(current, new_world.get(right_offset, y));
+            update_surrounding(right_offset, y);
+        }
+        else if (left.m_type == Material::Type::Empty)
+        {
+            current.m_current_inertia = {Material::Direction::Left};
+            std::swap(current, new_world.get(left_offset, y));
+            update_surrounding(left_offset, y);
+        }
+        else
+        {
+            current.m_current_inertia.reset();
+            update_surrounding(x, y);
+        }
+    }
+
+    std::set<coord> new_gasses;
+    for (const auto [x, y] : m_gasses)
+    {
+        auto&      current   = new_world.get(x, y);
+        const auto up_offset = std::min(y + 1, m_world->height() - 1);
+
+        if (y != m_world->height() - 1)
+        {
+            const auto& below = m_world->get(x, up_offset);
+
+            if (below.m_type == Material::Type::Empty)
+            {
+                current.m_current_inertia = {Material::Direction::Up};
+                std::swap(current, new_world.get(x, up_offset));
+                update_surrounding(x, up_offset);
+                continue;
+            }
+        }
+
+        const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
+        const auto right_offset = std::min(x + 1, m_world->width() - 1);
+
+        const auto& left  = m_world->get(left_offset, y);
+        const auto& right = m_world->get(right_offset, y);
 
         if (right.m_type == Material::Type::Empty && left.m_type == Material::Type::Empty &&
             current.m_current_inertia)
@@ -155,6 +212,7 @@ void GravitySimulation::next()
     *m_world = new_world;
     m_powders.clear();
     m_liquids.clear();
+    m_gasses.clear();
     for (const auto& coord : cells_to_check)
     {
         auto [x, y]          = coord;
@@ -163,6 +221,8 @@ void GravitySimulation::next()
             m_powders.emplace(coord);
         else if (material.m_type == Material::Type::Liquid)
             m_liquids.emplace(coord);
+        else if (material.m_type == Material::Type::Gas)
+            m_gasses.emplace(coord);
     }
 }
 

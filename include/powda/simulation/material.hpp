@@ -13,6 +13,7 @@ struct Material
         Empty,
         Powder,
         Liquid,
+        Gas,
         Wall
     } m_type = Type::Empty;
 
