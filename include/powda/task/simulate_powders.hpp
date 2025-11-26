@@ -6,17 +6,16 @@
 namespace powda
 {
 
-class World;
+class GravitySimulation;
 
 class SimulatePowders
 {
   public:
-    SimulatePowders(const std::shared_ptr<World>& world);
+    SimulatePowders(const std::shared_ptr<GravitySimulation>& gravity_simulation);
 
     void run();
-
   private:
-    std::shared_ptr<World> m_world;
+    std::shared_ptr<GravitySimulation> m_gravity_simulation;
 };
 
 } // namespace powda

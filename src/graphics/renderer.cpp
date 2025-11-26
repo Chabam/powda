@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <execution>
 #include <thread>
@@ -124,43 +125,23 @@ Renderer::~Renderer()
 
 void Renderer::render_world()
 {
-    std::fill(
+    std::transform(
         std::execution::par,
+        m_world->cbegin(),
+        m_world->cend(),
         m_pixels_buffers[m_current_buffer],
-        m_pixels_buffers[m_current_buffer] + m_world->count(),
-        0xFF131313
+        [](const auto& mat) {
+            switch (mat.m_type)
+            {
+            case Material::Type::Powder:
+                return 0xFF2596BE;
+            case Material::Type::Liquid:
+                return 0xFFA81200;
+            default:
+                return 0xFF131313;
+            }
+        }
     );
-
-    const auto xy_to_flat_idx = [width = m_world->width()](const World::coord& c) {
-        const auto [x, y] = c;
-        return x + (y * width);
-    };
-
-    const auto fill_walls = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
-        for (const auto& c : m_world->walls())
-        {
-            buf[xy_to_flat_idx(c)] = 0xFFABABAB;
-        }
-    };
-
-    const auto fill_powders = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
-        for (const auto& c : m_world->powders())
-        {
-            buf[xy_to_flat_idx(c)] = 0xFF2596BE;
-        }
-    };
-
-    const auto fill_liquids = [buf = m_pixels_buffers[m_current_buffer], &xy_to_flat_idx, this]() {
-        for (const auto& c : m_world->liquids())
-        {
-            buf[xy_to_flat_idx(c)] = 0xFFA81200;
-        }
-    };
-
-    std::vector<std::jthread> fill_jobs;
-    fill_jobs.emplace_back(fill_walls);
-    fill_jobs.emplace_back(fill_powders);
-    fill_jobs.emplace_back(fill_liquids);
 }
 
 void Renderer::render()

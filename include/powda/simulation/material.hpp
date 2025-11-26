@@ -12,7 +12,7 @@ struct Material
         Powder,
         Liquid,
         Wall
-    } m_type;
+    } m_type = Type::Empty;
 
     static const char* type_to_string(Material::Type mat);
 };

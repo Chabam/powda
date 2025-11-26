@@ -1,8 +1,9 @@
+#include <powda/graphics/window.hpp>
+#include <powda/simulation/gravity_simulation.hpp>
+#include <powda/simulation/material.hpp>
+#include <powda/simulation/world.hpp>
 #include <powda/task/handle_inputs.hpp>
 #include <powda/task/scheduler.hpp>
-#include <powda/graphics/window.hpp>
-#include <powda/simulation/world.hpp>
-#include <powda/simulation/material.hpp>
 
 //clang-format off
 #include <GLFW/glfw3.h>
@@ -11,15 +12,18 @@ namespace powda
 {
 
 HandleInputs::HandleInputs(
-    const std::shared_ptr<Window>&    window,
-    const std::shared_ptr<Scheduler>& scheduler,
-    const std::shared_ptr<World>&     world
-
+    const std::shared_ptr<Window>&            window,
+    const std::shared_ptr<Scheduler>&         scheduler,
+    const std::shared_ptr<World>&             world,
+    const std::shared_ptr<GravitySimulation>& gravity_simulation
 )
     : m_window{window}
     , m_scheduler{scheduler}
     , m_world{world}
+    , m_gravity_simulation{gravity_simulation}
     , m_selected_material{Material::Type::Powder}
+    , m_last_x_idx{static_cast<unsigned int>(-1)}
+    , m_last_y_idx{static_cast<unsigned int>(-1)}
     , m_logger{"input handler"}
 {
 }
@@ -72,9 +76,22 @@ void HandleInputs::run()
     );
 
     unsigned int x_idx = (mouse_info.x_pos / m_window->width()) * m_world->width();
-    unsigned int y_idx = ((m_window->height() - mouse_info.y_pos) / m_window->height()) * m_world->height();
+    unsigned int y_idx =
+        ((m_window->height() - mouse_info.y_pos) / m_window->height()) * m_world->height();
+
+    if (x_idx == m_last_x_idx && y_idx == m_last_y_idx)
+        return;
+
+    m_last_x_idx = x_idx;
+    m_last_y_idx = y_idx;
+
     if (left_click != mouse_info.m_current_pressed_buttons.end())
     {
+        if (m_selected_material == Material::Type::Powder)
+            m_gravity_simulation->add_powder(x_idx, y_idx);
+        else if (m_selected_material == Material::Type::Liquid)
+            m_gravity_simulation->add_liquid(x_idx, y_idx);
+
         m_world->set(x_idx, y_idx, m_selected_material);
     }
     else if (right_click != mouse_info.m_current_pressed_buttons.end())

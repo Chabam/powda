@@ -1,5 +1,6 @@
 target_sources(powda PRIVATE
-  world.cpp
+  gravity_simulation.cpp
   material.cpp
+  world.cpp
 )
 
