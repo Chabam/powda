@@ -64,9 +64,14 @@ void World::set(unsigned int x, unsigned int y, Material::Type mat)
     m_materials[convert_to_flat_idx(x, y)].m_type = mat;
 }
 
-Material::Type World::get(unsigned int x, unsigned int y) const
+Material& World::get(unsigned int x, unsigned int y)
 {
-    return m_materials[convert_to_flat_idx(x, y)].m_type;
+    return m_materials[convert_to_flat_idx(x, y)];
+}
+
+const Material& World::get(unsigned int x, unsigned int y) const
+{
+    return const_cast<Material&>(get(x, y));
 }
 
 size_t World::convert_to_flat_idx(unsigned int x, unsigned int y) const

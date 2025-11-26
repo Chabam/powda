@@ -19,8 +19,9 @@ class World
     World& operator=(const World& other);
     World& operator=(World&& other);
 
-    void           set(unsigned int x, unsigned int y, Material::Type mat);
-    Material::Type get(unsigned int x, unsigned int y) const;
+    void            set(unsigned int x, unsigned int y, Material::Type mat);
+    const Material& get(unsigned int x, unsigned int y) const;
+    Material&       get(unsigned int x, unsigned int y);
 
     unsigned int width() const { return m_width; }
     unsigned int height() const { return m_height; }
@@ -33,9 +34,9 @@ class World
     std::vector<Material>::iterator end() { return m_materials.end(); }
 
   private:
-    unsigned int       m_width;
-    unsigned int       m_height;
-    size_t             m_material_count;
+    unsigned int          m_width;
+    unsigned int          m_height;
+    size_t                m_material_count;
     std::vector<Material> m_materials;
 
     size_t convert_to_flat_idx(unsigned int x, unsigned int y) const;

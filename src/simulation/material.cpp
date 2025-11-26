@@ -1,3 +1,4 @@
+#include <utility>
 #include <powda/simulation/material.hpp>
 
 namespace powda
@@ -16,6 +17,11 @@ const char* Material::type_to_string(Material::Type mat)
     default:
         return "Empty";
     }
+}
+
+void swap(Material& lhs, Material& rhs)
+{
+    std::swap(lhs.m_type, rhs.m_type);
 }
 
 } // namespace powda
