@@ -1,6 +1,8 @@
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
 
+#include <optional>
+
 namespace powda
 {
 
@@ -14,7 +16,21 @@ struct Material
         Wall
     } m_type = Type::Empty;
 
-    static const char* type_to_string(Material::Type mat);
+    enum class Direction
+    {
+        Left,
+        Right,
+        Down,
+        DownLeft,
+        DownRight,
+        Up,
+        UpLeft,
+        UpRight
+    };
+    std::optional<Direction> m_current_inertia = {};
+
+    static const char*
+                type_to_string(Material::Type mat);
     friend void swap(Material& lhs, Material& rhs);
 };
 

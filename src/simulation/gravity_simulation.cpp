@@ -38,8 +38,8 @@ void GravitySimulation::next()
 
     std::set<coord> cells_to_check;
     auto            update_surrounding = [this, &cells_to_check](unsigned int x, unsigned int y) {
-        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
-        constexpr auto size = 2;
+        const auto     down_offset = std::max(static_cast<int>(y) - 1, 0);
+        constexpr auto size        = 2;
         for (int dx = -size; dx != size; ++dx)
         {
             const auto hor_offset =
@@ -95,15 +95,20 @@ void GravitySimulation::next()
     std::set<coord> new_liquids;
     for (const auto [x, y] : m_liquids)
     {
-        auto&       current     = new_world.get(x, y);
-        const auto  down_offset = std::max(static_cast<int>(y) - 1, 0);
-        const auto& below       = m_world->get(x, down_offset);
+        auto&      current     = new_world.get(x, y);
+        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
 
-        if (y != 0 && below.m_type == Material::Type::Empty)
+        if (y != 0)
         {
-            std::swap(current, new_world.get(x, down_offset));
-            update_surrounding(x, down_offset);
-            continue;
+            const auto& below = m_world->get(x, down_offset);
+
+            if (below.m_type == Material::Type::Empty)
+            {
+                current.m_current_inertia = {Material::Direction::Down};
+                std::swap(current, new_world.get(x, down_offset));
+                update_surrounding(x, down_offset);
+                continue;
+            }
         }
 
         const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
@@ -114,15 +119,36 @@ void GravitySimulation::next()
         const auto& below_left  = m_world->get(left_offset, down_offset);
         const auto& below_right = m_world->get(right_offset, down_offset);
 
-        if (right.m_type == Material::Type::Empty)
+        if (right.m_type == Material::Type::Empty && left.m_type == Material::Type::Empty &&
+            current.m_current_inertia)
         {
+            if (*current.m_current_inertia == Material::Direction::Right)
+            {
+                std::swap(current, new_world.get(right_offset, y));
+                update_surrounding(right_offset, y);
+            }
+            else if (*current.m_current_inertia == Material::Direction::Left)
+            {
+                std::swap(current, new_world.get(left_offset, y));
+                update_surrounding(left_offset, y);
+            }
+        }
+        else if (right.m_type == Material::Type::Empty)
+        {
+            current.m_current_inertia = {Material::Direction::Right};
             std::swap(current, new_world.get(right_offset, y));
             update_surrounding(right_offset, y);
         }
         else if (left.m_type == Material::Type::Empty)
         {
+            current.m_current_inertia = {Material::Direction::Left};
             std::swap(current, new_world.get(left_offset, y));
             update_surrounding(left_offset, y);
+        }
+        else
+        {
+            current.m_current_inertia.reset();
+            update_surrounding(x, y);
         }
     }
 
