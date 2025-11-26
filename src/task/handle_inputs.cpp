@@ -2,7 +2,7 @@
 #include <powda/task/scheduler.hpp>
 #include <powda/graphics/window.hpp>
 #include <powda/simulation/world.hpp>
-#include "powda/simulation/materials.hpp"
+#include <powda/simulation/material.hpp>
 
 //clang-format off
 #include <GLFW/glfw3.h>
@@ -19,7 +19,7 @@ HandleInputs::HandleInputs(
     : m_window{window}
     , m_scheduler{scheduler}
     , m_world{world}
-    , m_selected_material{Materials::Powder}
+    , m_selected_material{Material::Type::Powder}
     , m_logger{"input handler"}
 {
 }
@@ -42,19 +42,19 @@ void HandleInputs::run()
 
         if (pressed_key == GLFW_KEY_1)
         {
-            m_selected_material = Materials::Powder;
+            m_selected_material = Material::Type::Powder;
             m_logger.debug("Powder selected");
         }
 
         if (pressed_key == GLFW_KEY_2)
         {
-            m_selected_material = Materials::Wall;
+            m_selected_material = Material::Type::Wall;
             m_logger.debug("Wall selected");
         }
 
         if (pressed_key == GLFW_KEY_3)
         {
-            m_selected_material = Materials::Liquid;
+            m_selected_material = Material::Type::Liquid;
             m_logger.debug("Liquid selected");
         }
     }
@@ -79,7 +79,7 @@ void HandleInputs::run()
     }
     else if (right_click != mouse_info.m_current_pressed_buttons.end())
     {
-        m_world->set(x_idx, y_idx, Materials::Empty);
+        m_world->set(x_idx, y_idx, Material::Type::Empty);
     }
 }
 

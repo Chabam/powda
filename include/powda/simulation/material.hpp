@@ -1,0 +1,22 @@
+#ifndef MATERIAL_HPP
+#define MATERIAL_HPP
+
+namespace powda
+{
+
+struct Material
+{
+    enum class Type
+    {
+        Empty,
+        Powder,
+        Liquid,
+        Wall
+    } m_type;
+
+    static const char* type_to_string(Material::Type mat);
+};
+
+} // namespace powda
+
+#endif // MATERIAL_HPP

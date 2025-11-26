@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <powda/simulation/materials.hpp>
+#include <powda/simulation/material.hpp>
 #include <powda/logger.hpp>
 
 namespace powda
@@ -28,7 +28,7 @@ class HandleInputs
     std::shared_ptr<Window>    m_window;
     std::shared_ptr<Scheduler> m_scheduler;
     std::shared_ptr<World>     m_world;
-    Materials                  m_selected_material;
+    Material::Type             m_selected_material;
     Logger                     m_logger;
 };
 

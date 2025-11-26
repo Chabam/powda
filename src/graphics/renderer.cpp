@@ -1,11 +1,12 @@
-#include <glad/gl.h>
 #include <cassert>
 #include <execution>
 #include <thread>
 
+#include <glad/gl.h>
+
 #include <powda/graphics/renderer.hpp>
 #include <powda/graphics/shader.hpp>
-#include "powda/simulation/materials.hpp"
+#include <powda/simulation/material.hpp>
 
 namespace powda
 {

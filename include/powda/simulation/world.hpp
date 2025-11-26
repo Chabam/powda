@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include <powda/simulation/materials.hpp>
+#include <powda/simulation/material.hpp>
 
 namespace powda
 {
@@ -18,8 +18,8 @@ class World
 
     void next_step();
 
-    void      set(unsigned int x, unsigned int y, Materials mat);
-    Materials get(unsigned int x, unsigned int y) const;
+    void           set(unsigned int x, unsigned int y, Material::Type mat);
+    Material::Type get(unsigned int x, unsigned int y) const;
 
     unsigned int width() const { return m_width; }
     unsigned int height() const { return m_height; }
@@ -37,7 +37,7 @@ class World
     std::vector<coord> m_liquids;
     std::vector<coord> m_walls;
 
-    Materials get(
+    Material::Type get(
         unsigned int              x,
         unsigned int              y,
         const std::vector<coord>& powders,
