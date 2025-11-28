@@ -15,6 +15,7 @@ class GravitySimulation
     GravitySimulation(const std::shared_ptr<World>& world);
 
     void next();
+    void reset();
 
     void add_powder(unsigned int x, unsigned int y) { m_powders.emplace(x, y); }
     void add_liquid(unsigned int x, unsigned int y) { m_liquids.emplace(x, y); }

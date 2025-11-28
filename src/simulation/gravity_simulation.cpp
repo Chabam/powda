@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <format>
 
 #include <powda/simulation/gravity_simulation.hpp>
 #include <powda/simulation/material.hpp>
@@ -39,6 +40,13 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
     }
 }
 
+void GravitySimulation::reset()
+{
+    m_powders.clear();
+    m_liquids.clear();
+    m_gasses.clear();
+}
+
 void GravitySimulation::next()
 {
     World new_world{*m_world};
@@ -47,8 +55,17 @@ void GravitySimulation::next()
         [this, &new_world](
             unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y, auto& materials
         ) {
-            std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
-            materials.emplace(b_x, b_y);
+            if (!materials.contains({b_x, b_y}))
+            {
+                std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
+                materials.emplace(b_x, b_y);
+            }
+            else
+            {
+                // A material was already placed here! Leaving in
+                // place and will update on the next step.
+                materials.emplace(a_x, a_y);
+            }
         };
     using namespace std::placeholders;
 
@@ -97,7 +114,6 @@ void GravitySimulation::next()
         const auto& current        = m_world->get(x, y);
         const auto  down_offset    = std::max(static_cast<int>(y) - 1, 0);
         auto        update_liquids = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_liquids));
-
         if (y != 0)
         {
             const auto& below = m_world->get(x, down_offset);
@@ -129,6 +145,7 @@ void GravitySimulation::next()
         else
         {
             new_world.get(x, y)->reset_inertia();
+            m_liquids.emplace(x, y);
         }
     }
 
@@ -171,6 +188,7 @@ void GravitySimulation::next()
         else
         {
             new_world.get(x, y)->reset_inertia();
+            m_gasses.emplace(x, y);
         }
     }
 

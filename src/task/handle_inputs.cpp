@@ -44,6 +44,12 @@ void HandleInputs::run()
             m_scheduler->stop();
         }
 
+        if (pressed_key == GLFW_KEY_R)
+        {
+            m_gravity_simulation->reset();
+            m_world->reset();
+        }
+
         if (pressed_key == GLFW_KEY_1)
         {
             m_selected_material = Material::Type::Sand;

@@ -53,6 +53,11 @@ World& World::operator=(World&& other)
     return *this;
 }
 
+void World::reset()
+{
+    m_materials = std::vector<Material>{m_material_count, std::allocator<Material>{}};
+}
+
 void World::set(unsigned int x, unsigned int y, Material::Type mat)
 {
     m_materials[convert_to_flat_idx(x, y)] = std::make_shared<Material>(mat);
