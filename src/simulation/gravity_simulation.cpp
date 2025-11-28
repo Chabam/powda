@@ -43,17 +43,20 @@ void GravitySimulation::next()
     World new_world{*m_world};
 
     auto update_new_grid =
-        [this, &new_world](unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y) {
+        [this, &new_world](unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y, auto& materials) {
             std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
+            materials.emplace(b_x, b_y);
         };
     using namespace std::placeholders;
 
-    for (const auto [x, y] : m_powders)
+    const auto current_powders{m_powders};
+    m_powders.clear();
+    for (const auto [x, y] : current_powders)
     {
         auto&       current        = new_world.get(x, y);
         const auto  down_offset    = std::max(static_cast<int>(y) - 1, 0);
         const auto& below          = m_world->get(x, down_offset);
-        auto        update_powders = std::bind(update_new_grid, x, y, _1, _2);
+        auto        update_powders = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_powders));
 
         if (y == 0)
         {
@@ -85,11 +88,13 @@ void GravitySimulation::next()
         }
     }
 
-    for (const auto [x, y] : m_liquids)
+    const auto current_liquids{m_liquids};
+    m_liquids.clear();
+    for (const auto [x, y] : current_liquids)
     {
         const auto& current        = m_world->get(x, y);
         const auto  down_offset    = std::max(static_cast<int>(y) - 1, 0);
-        auto        update_liquids = std::bind(update_new_grid, x, y, _1, _2);
+        auto        update_liquids = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_liquids));
 
         if (y != 0)
         {
@@ -127,11 +132,13 @@ void GravitySimulation::next()
         }
     }
 
-    for (const auto [x, y] : m_gasses)
+    const auto current_gasses{m_gasses};
+    m_gasses.clear();
+    for (const auto [x, y] : current_gasses)
     {
         const auto& current       = m_world->get(x, y);
         const auto  up_offset     = std::min(y + 1, m_world->height() - 1);
-        auto        update_gasses = std::bind(update_new_grid, x, y, _1, _2);
+        auto        update_gasses = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_gasses));
 
         if (y != m_world->height() - 1)
         {
@@ -170,29 +177,6 @@ void GravitySimulation::next()
     }
 
     *m_world = std::move(new_world);
-    m_powders.clear();
-    m_liquids.clear();
-    m_gasses.clear();
-    size_t i = 0;
-    for (const auto& mat : *m_world)
-    {
-        unsigned int x   = i % m_world->width();
-        unsigned int y   = i / m_world->width();
-        const auto   cat = Material::get_type_category(mat.m_type);
-        if (cat == Material::Category::Powder)
-        {
-            m_powders.emplace(x, y);
-        }
-        else if (cat == Material::Category::Liquid)
-        {
-            m_liquids.emplace(x, y);
-        }
-        else if (cat == Material::Category::Gas)
-        {
-            m_gasses.emplace(x, y);
-        }
-        ++i;
-    }
 }
 
 } // namespace powda
