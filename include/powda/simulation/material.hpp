@@ -8,13 +8,24 @@ namespace powda
 
 struct Material
 {
-    enum class Type
+    enum class Category
     {
         Empty,
         Powder,
         Liquid,
         Gas,
         Wall
+    };
+
+    enum class Type
+    {
+        Empty,
+        Sand,
+        Gravel,
+        Water,
+        Oil,
+        Smoke,
+        Metal
     } m_type = Type::Empty;
 
     enum class Direction
@@ -28,10 +39,12 @@ struct Material
         UpLeft,
         UpRight
     };
-    std::optional<Direction> m_current_inertia = {};
+    std::optional<Direction> m_inertia = {};
+    double m_density = 1.0;
 
     static const char*
                 type_to_string(Material::Type mat);
+    static const Category get_type_category(Material::Type mat);
     friend void swap(Material& lhs, Material& rhs);
 };
 

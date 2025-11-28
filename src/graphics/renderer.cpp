@@ -133,13 +133,17 @@ void Renderer::render_world()
         [](const auto& mat) {
             switch (mat.m_type)
             {
-            case Material::Type::Powder:
+            case Material::Type::Sand:
                 return 0xFF2596BE;
-            case Material::Type::Liquid:
+            case Material::Type::Gravel:
+                return 0xFF333333;
+            case Material::Type::Water:
                 return 0xFFA81200;
-            case Material::Type::Gas:
+            case Material::Type::Oil:
+                return 0xFFFF1200;
+            case Material::Type::Smoke:
                 return 0xFF666666;
-            case Material::Type::Wall:
+            case Material::Type::Metal:
                 return 0xFFABABAB;
             default:
                 return 0xFF131313;

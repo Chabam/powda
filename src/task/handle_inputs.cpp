@@ -21,7 +21,7 @@ HandleInputs::HandleInputs(
     , m_scheduler{scheduler}
     , m_world{world}
     , m_gravity_simulation{gravity_simulation}
-    , m_selected_material{Material::Type::Powder}
+    , m_selected_material{Material::Type::Sand}
     , m_last_x_idx{static_cast<unsigned int>(-1)}
     , m_last_y_idx{static_cast<unsigned int>(-1)}
     , m_logger{"input handler"}
@@ -46,26 +46,38 @@ void HandleInputs::run()
 
         if (pressed_key == GLFW_KEY_1)
         {
-            m_selected_material = Material::Type::Powder;
-            m_logger.debug("Powder selected");
+            m_selected_material = Material::Type::Sand;
+            m_logger.debug("Sand selected");
         }
 
         if (pressed_key == GLFW_KEY_2)
         {
-            m_selected_material = Material::Type::Wall;
-            m_logger.debug("Wall selected");
+            m_selected_material = Material::Type::Metal;
+            m_logger.debug("Metal selected");
         }
 
         if (pressed_key == GLFW_KEY_3)
         {
-            m_selected_material = Material::Type::Liquid;
-            m_logger.debug("Liquid selected");
+            m_selected_material = Material::Type::Water;
+            m_logger.debug("Water selected");
         }
 
         if (pressed_key == GLFW_KEY_4)
         {
-            m_selected_material = Material::Type::Gas;
-            m_logger.debug("Gas selected");
+            m_selected_material = Material::Type::Smoke;
+            m_logger.debug("Smoke eselected");
+        }
+
+        if (pressed_key == GLFW_KEY_5)
+        {
+            m_selected_material = Material::Type::Gravel;
+            m_logger.debug("Gravel eselected");
+        }
+
+        if (pressed_key == GLFW_KEY_6)
+        {
+            m_selected_material = Material::Type::Oil;
+            m_logger.debug("Oil eselected");
         }
     }
 
@@ -93,11 +105,12 @@ void HandleInputs::run()
 
     if (left_click != mouse_info.m_current_pressed_buttons.end())
     {
-        if (m_selected_material == Material::Type::Powder)
+        const auto cat = Material::get_type_category(m_selected_material);
+        if (cat == Material::Category::Powder)
             m_gravity_simulation->add_powder(x_idx, y_idx);
-        else if (m_selected_material == Material::Type::Liquid)
+        else if (cat == Material::Category::Liquid)
             m_gravity_simulation->add_liquid(x_idx, y_idx);
-        else if (m_selected_material == Material::Type::Gas)
+        else if (cat == Material::Category::Gas)
             m_gravity_simulation->add_gas(x_idx, y_idx);
 
 
