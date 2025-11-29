@@ -26,6 +26,7 @@ class World
 
     void                             set(unsigned int x, unsigned int y, Material::Type mat);
     void                             reset(unsigned int x, unsigned int y);
+    void                             reset();
     const std::shared_ptr<Material>& get(unsigned int x, unsigned int y) const;
     std::shared_ptr<Material>&       get(unsigned int x, unsigned int y);
 

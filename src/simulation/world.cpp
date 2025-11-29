@@ -55,7 +55,8 @@ World& World::operator=(World&& other)
 
 void World::reset()
 {
-    m_materials = std::vector<Material>{m_material_count, std::allocator<Material>{}};
+    m_materials =
+        std::vector<std::shared_ptr<Material>>{m_material_count, std::allocator<Material>{}};
 }
 
 void World::set(unsigned int x, unsigned int y, Material::Type mat)
