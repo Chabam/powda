@@ -13,7 +13,7 @@ namespace powda
 class World
 {
   public:
-    using material_container = std::vector<std::shared_ptr<Material>>;
+    using material_container = std::vector<std::optional<Material>>;
     using iterator           = material_container::iterator;
     using const_iterator     = material_container::const_iterator;
 
@@ -24,11 +24,11 @@ class World
     World& operator=(const World& other);
     World& operator=(World&& other);
 
-    void                             set(unsigned int x, unsigned int y, Material::Type mat);
-    void                             reset(unsigned int x, unsigned int y);
-    void                             reset();
-    const std::shared_ptr<Material>& get(unsigned int x, unsigned int y) const;
-    std::shared_ptr<Material>&       get(unsigned int x, unsigned int y);
+    void                           set(unsigned int x, unsigned int y, Material::Type mat);
+    void                           reset(unsigned int x, unsigned int y);
+    void                           reset();
+    const std::optional<Material>& get(unsigned int x, unsigned int y) const;
+    std::optional<Material>&       get(unsigned int x, unsigned int y);
 
     unsigned int width() const { return m_width; }
     unsigned int height() const { return m_height; }
@@ -42,10 +42,10 @@ class World
     iterator end() { return m_materials.end(); }
 
   private:
-    unsigned int                           m_width;
-    unsigned int                           m_height;
-    size_t                                 m_material_count;
-    std::vector<std::shared_ptr<Material>> m_materials;
+    unsigned int       m_width;
+    unsigned int       m_height;
+    size_t             m_material_count;
+    material_container m_materials;
 
     size_t convert_to_flat_idx(unsigned int x, unsigned int y) const;
 };

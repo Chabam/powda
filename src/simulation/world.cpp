@@ -56,12 +56,12 @@ World& World::operator=(World&& other)
 void World::reset()
 {
     m_materials =
-        std::vector<std::shared_ptr<Material>>{m_material_count, std::allocator<Material>{}};
+        material_container{m_material_count, std::allocator<Material>{}};
 }
 
 void World::set(unsigned int x, unsigned int y, Material::Type mat)
 {
-    m_materials[convert_to_flat_idx(x, y)] = std::make_shared<Material>(mat);
+    m_materials[convert_to_flat_idx(x, y)] = Material{mat};
 }
 
 void World::reset(unsigned int x, unsigned int y)
@@ -69,14 +69,14 @@ void World::reset(unsigned int x, unsigned int y)
     m_materials[convert_to_flat_idx(x, y)].reset();
 }
 
-std::shared_ptr<Material>& World::get(unsigned int x, unsigned int y)
+std::optional<Material>& World::get(unsigned int x, unsigned int y)
 {
     return m_materials[convert_to_flat_idx(x, y)];
 }
 
-const std::shared_ptr<Material>& World::get(unsigned int x, unsigned int y) const
+const std::optional<Material>& World::get(unsigned int x, unsigned int y) const
 {
-    return const_cast<std::shared_ptr<Material>&>(get(x, y));
+    return const_cast<std::optional<Material>&>(get(x, y));
 }
 
 size_t World::convert_to_flat_idx(unsigned int x, unsigned int y) const
