@@ -1,14 +1,8 @@
-#include <algorithm>
 #include <cassert>
-#include <functional>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <type_traits>
 
+#include <powda/logger.hpp>
 #include <powda/simulation/material.hpp>
 #include <powda/simulation/world.hpp>
-#include <powda/logger.hpp>
 
 namespace powda
 {
@@ -61,17 +55,22 @@ World& World::operator=(World&& other)
 
 void World::set(unsigned int x, unsigned int y, Material::Type mat)
 {
-    m_materials[convert_to_flat_idx(x, y)].m_type = mat;
+    m_materials[convert_to_flat_idx(x, y)] = std::make_shared<Material>(mat);
 }
 
-Material& World::get(unsigned int x, unsigned int y)
+void World::reset(unsigned int x, unsigned int y)
+{
+    m_materials[convert_to_flat_idx(x, y)].reset();
+}
+
+std::shared_ptr<Material>& World::get(unsigned int x, unsigned int y)
 {
     return m_materials[convert_to_flat_idx(x, y)];
 }
 
-const Material& World::get(unsigned int x, unsigned int y) const
+const std::shared_ptr<Material>& World::get(unsigned int x, unsigned int y) const
 {
-    return const_cast<Material&>(get(x, y));
+    return const_cast<std::shared_ptr<Material>&>(get(x, y));
 }
 
 size_t World::convert_to_flat_idx(unsigned int x, unsigned int y) const

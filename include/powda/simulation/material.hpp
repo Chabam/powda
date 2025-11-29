@@ -6,11 +6,11 @@
 namespace powda
 {
 
-struct Material
+class Material
 {
+  public:
     enum class Category
     {
-        Empty,
         Powder,
         Liquid,
         Gas,
@@ -19,14 +19,13 @@ struct Material
 
     enum class Type
     {
-        Empty,
         Sand,
         Gravel,
         Water,
         Oil,
         Smoke,
         Metal
-    } m_type = Type::Empty;
+    };
 
     enum class Direction
     {
@@ -39,13 +38,23 @@ struct Material
         UpLeft,
         UpRight
     };
-    std::optional<Direction> m_inertia = {};
-    double m_density = 1.0;
 
-    static const char*
-                type_to_string(Material::Type mat);
-    static const Category get_type_category(Material::Type mat);
-    friend void swap(Material& lhs, Material& rhs);
+    Material(Type type);
+
+    void reset_inertia() { m_inertia.reset(); }
+    void set_inertia(Direction dir) { m_inertia.emplace(dir); }
+    const std::optional<Direction>& inertia() const { return m_inertia; }
+
+    Type               type() const { return m_type; }
+    Category           category() const { return m_category; }
+    friend void        swap(Material& lhs, Material& rhs);
+    static const char* type_to_string(Material::Type mat);
+
+  private:
+    Type                     m_type;
+    Category                 m_category;
+    std::optional<Direction> m_inertia;
+    double                   m_density;
 };
 
 } // namespace powda

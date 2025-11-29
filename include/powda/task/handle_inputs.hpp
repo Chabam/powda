@@ -31,7 +31,7 @@ class HandleInputs
     std::shared_ptr<Scheduler>         m_scheduler;
     std::shared_ptr<World>             m_world;
     std::shared_ptr<GravitySimulation> m_gravity_simulation;
-    Material::Type                     m_selected_material;
+    Material                           m_selected_material;
     unsigned int                       m_last_x_idx;
     unsigned int                       m_last_y_idx;
     Logger                             m_logger;

@@ -105,7 +105,7 @@ void HandleInputs::run()
 
     if (left_click != mouse_info.m_current_pressed_buttons.end())
     {
-        const auto cat = Material::get_type_category(m_selected_material);
+        const auto cat = m_selected_material.category();
         if (cat == Material::Category::Powder)
             m_gravity_simulation->add_powder(x_idx, y_idx);
         else if (cat == Material::Category::Liquid)
@@ -114,11 +114,11 @@ void HandleInputs::run()
             m_gravity_simulation->add_gas(x_idx, y_idx);
 
 
-        m_world->set(x_idx, y_idx, m_selected_material);
+        m_world->set(x_idx, y_idx, m_selected_material.type());
     }
     else if (right_click != mouse_info.m_current_pressed_buttons.end())
     {
-        m_world->set(x_idx, y_idx, Material::Type::Empty);
+        m_world->reset(x_idx, y_idx);
     }
 }
 

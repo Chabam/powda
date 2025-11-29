@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <execution>
+#include <stdexcept>
 #include <thread>
 
 #include <glad/gl.h>
@@ -131,7 +132,10 @@ void Renderer::render_world()
         m_world->cend(),
         m_pixels_buffers[m_current_buffer],
         [](const auto& mat) {
-            switch (mat.m_type)
+            if (!mat)
+                return 0xFF131313;
+
+            switch (mat->type())
             {
             case Material::Type::Sand:
                 return 0xFF2596BE;
@@ -146,7 +150,9 @@ void Renderer::render_world()
             case Material::Type::Metal:
                 return 0xFFABABAB;
             default:
-                return 0xFF131313;
+                throw std::runtime_error(
+                    std::format("Unhandled material: {}", Material::type_to_string(mat->type()))
+                );
             }
         }
     );

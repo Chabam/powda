@@ -19,9 +19,10 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
     size_t i = 0;
     for (const auto& mat : *m_world)
     {
+        if (!mat) continue;
         unsigned int x   = i % m_world->width();
         unsigned int y   = i / m_world->width();
-        const auto   cat = Material::get_type_category(mat.m_type);
+        const auto   cat = mat->category();
         if (cat == Material::Category::Powder)
         {
             m_powders.emplace(x, y);
@@ -43,7 +44,9 @@ void GravitySimulation::next()
     World new_world{*m_world};
 
     auto update_new_grid =
-        [this, &new_world](unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y, auto& materials) {
+        [this, &new_world](
+            unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y, auto& materials
+        ) {
             std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
             materials.emplace(b_x, b_y);
         };
@@ -63,7 +66,7 @@ void GravitySimulation::next()
             continue;
         }
 
-        if (below.m_type == Material::Type::Empty)
+        if (!below)
         {
             update_powders(x, down_offset);
             continue;
@@ -77,12 +80,11 @@ void GravitySimulation::next()
         const auto& below_left  = m_world->get(left_offset, down_offset);
         const auto& below_right = m_world->get(right_offset, down_offset);
 
-        if (left.m_type == Material::Type::Empty && below_left.m_type == Material::Type::Empty)
+        if (!left && !below_left)
         {
             update_powders(left_offset, down_offset);
         }
-        else if (right.m_type == Material::Type::Empty &&
-                 below_right.m_type == Material::Type::Empty)
+        else if (!right && !below_right)
         {
             update_powders(right_offset, down_offset);
         }
@@ -100,9 +102,9 @@ void GravitySimulation::next()
         {
             const auto& below = m_world->get(x, down_offset);
 
-            if (below.m_type == Material::Type::Empty)
+            if (!below)
             {
-                new_world.get(x, y).m_inertia.reset();
+                new_world.get(x, y)->reset_inertia();
                 update_liquids(x, down_offset);
                 continue;
             }
@@ -111,24 +113,22 @@ void GravitySimulation::next()
         const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
         const auto right_offset = std::min(x + 1, m_world->width() - 1);
 
-        const auto& left        = m_world->get(left_offset, y);
-        const auto& right       = m_world->get(right_offset, y);
+        const auto& left  = m_world->get(left_offset, y);
+        const auto& right = m_world->get(right_offset, y);
 
-        if (right.m_type == Material::Type::Empty &&
-            (!current.m_inertia || current.m_inertia == Material::Direction::Right))
+        if (!right && (!current->inertia() || current->inertia() == Material::Direction::Right))
         {
-            new_world.get(x, y).m_inertia = {Material::Direction::Right};
+            new_world.get(x, y)->set_inertia(Material::Direction::Right);
             update_liquids(right_offset, y);
         }
-        else if (left.m_type == Material::Type::Empty &&
-                 (!current.m_inertia || current.m_inertia == Material::Direction::Left))
+        else if (!left && (!current->inertia() || current->inertia() == Material::Direction::Left))
         {
-            new_world.get(x, y).m_inertia = {Material::Direction::Left};
+            new_world.get(x, y)->set_inertia(Material::Direction::Left);
             update_liquids(left_offset, y);
         }
         else
         {
-            new_world.get(x, y).m_inertia.reset();
+            new_world.get(x, y)->reset_inertia();
         }
     }
 
@@ -144,9 +144,9 @@ void GravitySimulation::next()
         {
             const auto& above = m_world->get(x, up_offset);
 
-            if (above.m_type == Material::Type::Empty)
+            if (!above)
             {
-                new_world.get(x, y).m_inertia.reset();
+                new_world.get(x, y)->reset_inertia();
                 update_gasses(x, up_offset);
                 continue;
             }
@@ -158,21 +158,19 @@ void GravitySimulation::next()
         const auto& left  = m_world->get(left_offset, y);
         const auto& right = m_world->get(right_offset, y);
 
-        if (right.m_type == Material::Type::Empty &&
-            (!current.m_inertia || current.m_inertia == Material::Direction::Right))
+        if (!right && (!current->inertia() || current->inertia() == Material::Direction::Right))
         {
-            new_world.get(x, y).m_inertia = {Material::Direction::Right};
+            new_world.get(x, y)->set_inertia(Material::Direction::Right);
             update_gasses(right_offset, y);
         }
-        else if (left.m_type == Material::Type::Empty &&
-                 (!current.m_inertia || current.m_inertia == Material::Direction::Left))
+        else if (!left && (!current->inertia() || current->inertia() == Material::Direction::Left))
         {
-            new_world.get(x, y).m_inertia = {Material::Direction::Left};
+            new_world.get(x, y)->set_inertia(Material::Direction::Left);
             update_gasses(left_offset, y);
         }
         else
         {
-            new_world.get(x, y).m_inertia.reset();
+            new_world.get(x, y)->reset_inertia();
         }
     }
 

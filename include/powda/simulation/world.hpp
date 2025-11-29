@@ -2,6 +2,7 @@
 #define POWDA_WORLD_HPP
 
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 #include <powda/simulation/material.hpp>
@@ -12,6 +13,10 @@ namespace powda
 class World
 {
   public:
+    using material_container = std::vector<std::shared_ptr<Material>>;
+    using iterator           = material_container::iterator;
+    using const_iterator     = material_container::const_iterator;
+
     World(unsigned int width, unsigned int height);
     World(const World& other);
     World(World&& other);
@@ -19,25 +24,27 @@ class World
     World& operator=(const World& other);
     World& operator=(World&& other);
 
-    void            set(unsigned int x, unsigned int y, Material::Type mat);
-    const Material& get(unsigned int x, unsigned int y) const;
-    Material&       get(unsigned int x, unsigned int y);
+    void                             set(unsigned int x, unsigned int y, Material::Type mat);
+    void                             reset(unsigned int x, unsigned int y);
+    const std::shared_ptr<Material>& get(unsigned int x, unsigned int y) const;
+    std::shared_ptr<Material>&       get(unsigned int x, unsigned int y);
 
     unsigned int width() const { return m_width; }
     unsigned int height() const { return m_height; }
     unsigned int count() const { return m_material_count; }
 
-    std::vector<Material>::const_iterator cbegin() const { return m_materials.cbegin(); }
-    std::vector<Material>::const_iterator cend() const { return m_materials.cend(); }
+    const_iterator cbegin() const { return m_materials.cbegin(); }
 
-    std::vector<Material>::iterator begin() { return m_materials.begin(); }
-    std::vector<Material>::iterator end() { return m_materials.end(); }
+    const_iterator cend() const { return m_materials.cend(); }
+
+    iterator begin() { return m_materials.begin(); }
+    iterator end() { return m_materials.end(); }
 
   private:
-    unsigned int          m_width;
-    unsigned int          m_height;
-    size_t                m_material_count;
-    std::vector<Material> m_materials;
+    unsigned int                           m_width;
+    unsigned int                           m_height;
+    size_t                                 m_material_count;
+    std::vector<std::shared_ptr<Material>> m_materials;
 
     size_t convert_to_flat_idx(unsigned int x, unsigned int y) const;
 };
