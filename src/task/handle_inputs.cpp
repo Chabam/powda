@@ -125,6 +125,7 @@ void HandleInputs::run()
     else if (right_click != mouse_info.m_current_pressed_buttons.end())
     {
         m_world->reset(x_idx, y_idx);
+        m_gravity_simulation->remove(x_idx, y_idx);
     }
 }
 

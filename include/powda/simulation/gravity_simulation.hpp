@@ -17,6 +17,8 @@ class GravitySimulation
     void next();
     void reset();
 
+    void remove(unsigned int x, unsigned int y);
+
     void add_powder(unsigned int x, unsigned int y) { m_powders.emplace(x, y); }
     void add_liquid(unsigned int x, unsigned int y) { m_liquids.emplace(x, y); }
     void add_gas(unsigned int x, unsigned int y) { m_gasses.emplace(x, y); }

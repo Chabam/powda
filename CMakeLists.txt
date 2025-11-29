@@ -22,7 +22,16 @@ FetchContent_Declare(
   GIT_PROGRESS   TRUE
 )
 
-FetchContent_MakeAvailable(glfw glad)
+FetchContent_Declare(
+  eigen
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+  GIT_TAG        5.0
+  GIT_SHALLOW    TRUE
+  GIT_PROGRESS   TRUE
+  FIND_PACKAGE_ARGS NAMES Eigen3
+)
+
+FetchContent_MakeAvailable(glfw glad eigen)
 add_subdirectory(${glad_SOURCE_DIR}/cmake ${glad_BINARY_DIR})
 glad_add_library(glad STATIC REPRODUCIBLE LOADER LANGUAGE C API gl:core=4.6)
 

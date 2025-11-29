@@ -47,6 +47,8 @@ class Material
 
     Type               type() const { return m_type; }
     Category           category() const { return m_category; }
+    double             density() const { return m_density; }
+
     friend void        swap(Material& lhs, Material& rhs);
     static const char* type_to_string(Material::Type mat);
 

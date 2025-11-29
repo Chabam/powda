@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <cassert>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Eigen>
 #include <execution>
 #include <stdexcept>
-#include <thread>
 
 #include <glad/gl.h>
 
@@ -77,7 +78,6 @@ Renderer::Renderer(const std::shared_ptr<World>& world)
             glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, data_size, buffer_mask)
         );
 
-        std::fill(ptr, ptr + m_world->count(), 0xFF131313);
         m_pixels_buffers[i] = ptr;
     }
 
@@ -126,29 +126,33 @@ Renderer::~Renderer()
 
 void Renderer::render_world()
 {
+    constexpr auto color = [](unsigned int r, unsigned int g, unsigned int b) {
+        return (255 << 24) | (b << 16) | (g << 8) | r;
+    };
+
     std::transform(
         std::execution::par,
         m_world->cbegin(),
         m_world->cend(),
         m_pixels_buffers[m_current_buffer],
-        [](const auto& mat) {
+        [&color](const auto& mat) {
             if (!mat)
-                return 0xFF131313;
+                return color(13, 13, 13);
 
             switch (mat->type())
             {
             case Material::Type::Sand:
-                return 0xFF2596BE;
+                return color(252, 186, 3);
             case Material::Type::Gravel:
-                return 0xFF333333;
+                return color(117, 112, 99);
             case Material::Type::Water:
-                return 0xFFA81200;
+                return color(0, 30, 201);
             case Material::Type::Oil:
-                return 0xFFFF1200;
+                return color(82, 47, 22);
             case Material::Type::Smoke:
-                return 0xFF666666;
+                return color(94, 92, 90);
             case Material::Type::Metal:
-                return 0xFFABABAB;
+                return color(115, 113, 95);
             default:
                 throw std::runtime_error(
                     std::format("Unhandled material: {}", Material::type_to_string(mat->type()))
