@@ -1,6 +1,3 @@
-const std = @import("std");
-const ArrayList = std.ArrayList;
-
 pub const Material = struct {
     pub const Category = enum { Powder, Liquid, Gas, Wall };
     pub const Kind = enum { Sand, Gravel, Water, Oil, Smoke, Metal };
@@ -25,31 +22,5 @@ pub const Material = struct {
             Kind.Metal => 10.0,
         };
         return Material{ .category = kind_to_cat, .kind = kind, .density = kind_to_density, .inertia = null };
-    }
-};
-
-pub const World = struct {
-    width: u32,
-    height: u32,
-    count: u64,
-    materials: []?Material,
-    const allocator = std.heap.page_allocator;
-    pub fn init(width: u32, height: u32) World {
-        const count = width * height;
-        const materials = allocator.alloc(?Material, count) catch @panic("OOM!");
-
-        for (materials) |*mat| {
-            mat.* = null;
-        }
-
-        return World{
-            .width = width,
-            .height = height,
-            .count = count,
-            .materials = materials,
-        };
-    }
-    pub fn deinit(self: *World) void {
-        allocator.free(self.materials);
     }
 };
