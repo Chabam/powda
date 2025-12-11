@@ -2,7 +2,6 @@
 #define POWDA_WORLD_HPP
 
 #include <cstddef>
-#include <memory>
 #include <vector>
 
 #include <powda/simulation/material.hpp>

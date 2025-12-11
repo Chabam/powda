@@ -3,6 +3,7 @@
 #include <functional>
 #include <iostream>
 #include <format>
+#include <random>
 
 #include <powda/simulation/gravity_simulation.hpp>
 #include <powda/simulation/material.hpp>
@@ -17,6 +18,7 @@ GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
     , m_powders{}
     , m_liquids{}
     , m_gasses{}
+    , m_random_device{}
 {
     size_t i = 0;
     for (const auto& mat : *m_world)
@@ -145,46 +147,58 @@ void GravitySimulation::next()
 
             if (!below || below->density() < current->density())
             {
-                new_world.get(x, y)->reset_inertia();
                 update_liquids(x, down_offset);
                 continue;
             }
         }
 
-        const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
-        const auto right_offset = std::min(x + 1, m_world->width() - 1);
+        auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
+        auto right_offset = std::min(x + 1, m_world->width() - 1);
+
+        for (unsigned char i = 0; i < current->spread(); ++i)
+        {
+            if (m_world->get(left_offset, y))
+                break;
+
+            left_offset = std::max(static_cast<int>(--left_offset) - 1, 0);
+        }
+
+        for (unsigned char i = 0; i < current->spread(); ++i)
+        {
+            if (m_world->get(right_offset, y))
+                break;
+
+            right_offset = std::min(++right_offset, m_world->width() - 1);
+        }
 
         const auto& left        = m_world->get(left_offset, y);
         const auto& right       = m_world->get(right_offset, y);
         const auto& below_left  = m_world->get(left_offset, down_offset);
         const auto& below_right = m_world->get(right_offset, down_offset);
 
-
-        if (!left && !below_left && (!current->inertia() || current->inertia() == Material::Direction::Left))
+        if (!right && !left)
         {
-            new_world.get(x, y)->set_inertia(Material::Direction::Left);
-            update_liquids(left_offset, down_offset);
+            const auto rand_dir =
+                std::uniform_int_distribution<unsigned char>(0, 1)(m_random_device);
+            if (rand_dir == 0)
+            {
+                update_liquids(left_offset, y);
+            }
+            else
+            {
+                update_liquids(right_offset, y);
+            }
         }
-        else if (!right && !below_right &&
-                 (!current->inertia() || current->inertia() == Material::Direction::Right))
+        else if (!right)
         {
-            new_world.get(x, y)->set_inertia(Material::Direction::Right);
-            update_liquids(right_offset, down_offset);
-        }
-        else if (!right &&
-                 (!current->inertia() || current->inertia() == Material::Direction::Right))
-        {
-            new_world.get(x, y)->set_inertia(Material::Direction::Right);
             update_liquids(right_offset, y);
         }
-        else if (!left && (!current->inertia() || current->inertia() == Material::Direction::Left))
+        else if (!left)
         {
-            new_world.get(x, y)->set_inertia(Material::Direction::Left);
             update_liquids(left_offset, y);
         }
         else
         {
-            new_world.get(x, y)->reset_inertia();
             m_liquids.emplace(x, y);
         }
     }
@@ -207,7 +221,6 @@ void GravitySimulation::next()
 
             if (!above || above->density() > current->density())
             {
-                new_world.get(x, y)->reset_inertia();
                 update_gasses(x, up_offset);
                 continue;
             }
@@ -216,23 +229,43 @@ void GravitySimulation::next()
         const auto left_offset  = std::max(static_cast<int>(x) - 1, 0);
         const auto right_offset = std::min(x + 1, m_world->width() - 1);
 
-        const auto& left  = m_world->get(left_offset, y);
-        const auto& right = m_world->get(right_offset, y);
+        const auto& left        = m_world->get(left_offset, y);
+        const auto& right       = m_world->get(right_offset, y);
+        const auto& above_left  = m_world->get(left_offset, up_offset);
+        const auto& above_right = m_world->get(right_offset, up_offset);
 
-        if (!right && (!current->inertia() || current->inertia() == Material::Direction::Right))
+        if (!right && !left)
         {
-            new_world.get(x, y)->set_inertia(Material::Direction::Right);
+            const auto rand_dir =
+                std::uniform_int_distribution<unsigned char>(0, 1)(m_random_device);
+            if (rand_dir == 0)
+            {
+                update_gasses(left_offset, y);
+            }
+            else
+            {
+                update_gasses(right_offset, y);
+            }
+        }
+        else if (!left && !above_left)
+        {
+            update_gasses(left_offset, up_offset);
+        }
+        else if (!right && !above_right)
+        {
+            update_gasses(right_offset, up_offset);
+        }
+        else if (!right)
+        {
             update_gasses(right_offset, y);
         }
-        else if (!left && (!current->inertia() || current->inertia() == Material::Direction::Left))
+        else if (!left)
         {
-            new_world.get(x, y)->set_inertia(Material::Direction::Left);
             update_gasses(left_offset, y);
         }
         else
         {
-            new_world.get(x, y)->reset_inertia();
-            m_gasses.emplace(x, y);
+            m_liquids.emplace(x, y);
         }
     }
 

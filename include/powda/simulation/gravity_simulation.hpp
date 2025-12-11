@@ -2,6 +2,7 @@
 #define POWDA_GRAVITY_SIMULATION_HPP
 
 #include <memory>
+#include <random>
 #include <set>
 
 namespace powda
@@ -25,10 +26,11 @@ class GravitySimulation
 
   private:
     using coord = std::pair<unsigned int, unsigned int>;
-    std::shared_ptr<World> m_world;
-    std::set<coord>        m_powders;
-    std::set<coord>        m_liquids;
-    std::set<coord>        m_gasses;
+    std::shared_ptr<World>     m_world;
+    std::set<coord>            m_powders;
+    std::set<coord>            m_liquids;
+    std::set<coord>            m_gasses;
+    std::random_device         m_random_device;
 };
 
 } // namespace powda

@@ -23,6 +23,15 @@ static const std::unordered_map<Material::Type, double> g_density_mapping{
     {Material::Type::Metal, 10.0}
 };
 
+static const std::unordered_map<Material::Type, unsigned int> g_spread_mapping{
+    {Material::Type::Sand, 0},
+    {Material::Type::Gravel, 0},
+    {Material::Type::Water, 1},
+    {Material::Type::Oil, 2},
+    {Material::Type::Smoke, 2},
+    {Material::Type::Metal, 0}
+};
+
 static const std::unordered_map<Material::Type, const char*> g_string_mapping{
     {Material::Type::Sand, "Sand"},
     {Material::Type::Gravel, "Gravel"},
@@ -35,8 +44,8 @@ static const std::unordered_map<Material::Type, const char*> g_string_mapping{
 Material::Material(Type type)
     : m_type{type}
     , m_category{g_category_mapping.at(m_type)}
-    , m_inertia{}
     , m_density{g_density_mapping.at(m_type)}
+    , m_spread{g_spread_mapping.at(m_type)}
 {
 }
 
@@ -44,8 +53,8 @@ void swap(Material& lhs, Material& rhs)
 {
     std::swap(lhs.m_type, rhs.m_type);
     std::swap(lhs.m_category, rhs.m_category);
-    std::swap(lhs.m_inertia, rhs.m_inertia);
     std::swap(lhs.m_density, rhs.m_density);
+    std::swap(lhs.m_spread, rhs.m_spread);
 }
 
 const char* Material::type_to_string(Material::Type type)
