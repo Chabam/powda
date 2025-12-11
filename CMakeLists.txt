@@ -40,4 +40,19 @@ set_target_properties(powda PROPERTIES CXX_STANDARD 20)
 
 target_include_directories(powda PRIVATE include/)
 
-add_subdirectory(src)
+target_sources(powda
+  PRIVATE
+  src/graphics/renderer.cpp
+  src/graphics/shader.cpp
+  src/graphics/shader_program.cpp
+  src/graphics/window.cpp
+  src/logger.cpp
+  src/main.cpp
+  src/simulation/gravity_simulation.cpp
+  src/simulation/material.cpp
+  src/simulation/world.cpp
+  src/task/handle_inputs.cpp
+  src/task/render_world.cpp
+  src/task/scheduler.cpp
+  src/task/simulate_powders.cpp
+)
