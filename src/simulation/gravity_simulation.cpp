@@ -1,8 +1,6 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <functional>
-#include <iostream>
-#include <format>
 #include <random>
 
 #include <powda/simulation/gravity_simulation.hpp>
@@ -12,6 +10,8 @@
 
 namespace powda
 {
+
+using namespace std::placeholders;
 
 GravitySimulation::GravitySimulation(const std::shared_ptr<World>& world)
     : m_world{world}
@@ -62,28 +62,30 @@ void GravitySimulation::remove(unsigned int x, unsigned int y)
         return;
 }
 
-void GravitySimulation::next()
+void GravitySimulation::update_new_grid(
+    World&                              new_world,
+    unsigned int                        a_x,
+    unsigned int                        a_y,
+    unsigned int                        b_x,
+    unsigned int                        b_y,
+    std::set<GravitySimulation::coord>& materials
+)
 {
-    World new_world{*m_world};
+    if (!materials.contains({b_x, b_y}))
+    {
+        std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
+        materials.emplace(b_x, b_y);
+    }
+    else
+    {
+        // A material was already placed here! Leaving in
+        // place and will update on the next step.
+        materials.emplace(a_x, a_y);
+    }
+};
 
-    auto update_new_grid =
-        [this, &new_world](
-            unsigned int a_x, unsigned int a_y, unsigned int b_x, unsigned int b_y, auto& materials
-        ) {
-            if (!materials.contains({b_x, b_y}))
-            {
-                std::swap(new_world.get(a_x, a_y), new_world.get(b_x, b_y));
-                materials.emplace(b_x, b_y);
-            }
-            else
-            {
-                // A material was already placed here! Leaving in
-                // place and will update on the next step.
-                materials.emplace(a_x, a_y);
-            }
-        };
-    using namespace std::placeholders;
-
+void GravitySimulation::update_powders(World& new_world)
+{
     const auto current_powders{m_powders};
     m_powders.clear();
     for (const auto [x, y] : current_powders)
@@ -93,9 +95,10 @@ void GravitySimulation::next()
         if (!current)
             continue;
 
-        const auto  down_offset    = std::max(static_cast<int>(y) - 1, 0);
-        const auto& below          = m_world->get(x, down_offset);
-        auto        update_powders = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_powders));
+        const auto  down_offset = std::max(static_cast<int>(y) - 1, 0);
+        const auto& below       = m_world->get(x, down_offset);
+        auto        update_powders =
+            std::bind(update_new_grid, std::ref(new_world), x, y, _1, _2, std::ref(m_powders));
 
         if (y == 0)
         {
@@ -129,9 +132,13 @@ void GravitySimulation::next()
             m_powders.emplace(x, y);
         }
     }
+}
 
+void GravitySimulation::update_liquids(World& new_world)
+{
     const auto current_liquids{m_liquids};
     m_liquids.clear();
+    auto rand_l_or_r = std::uniform_int_distribution<unsigned char>(0, 1);
     for (const auto [x, y] : current_liquids)
     {
         const auto& current = m_world->get(x, y);
@@ -139,8 +146,9 @@ void GravitySimulation::next()
         if (!current)
             continue;
 
-        const auto down_offset    = std::max(static_cast<int>(y) - 1, 0);
-        auto       update_liquids = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_liquids));
+        const auto down_offset = std::max(static_cast<int>(y) - 1, 0);
+        auto       update_liquids =
+            std::bind(update_new_grid, std::ref(new_world), x, y, _1, _2, std::ref(m_liquids));
         if (y != 0)
         {
             const auto& below = m_world->get(x, down_offset);
@@ -178,8 +186,7 @@ void GravitySimulation::next()
 
         if (!right && !left)
         {
-            const auto rand_dir =
-                std::uniform_int_distribution<unsigned char>(0, 1)(m_random_device);
+            const auto rand_dir = rand_l_or_r(m_random_device);
             if (rand_dir == 0)
             {
                 update_liquids(left_offset, y);
@@ -202,9 +209,13 @@ void GravitySimulation::next()
             m_liquids.emplace(x, y);
         }
     }
+}
 
+void GravitySimulation::update_gasses(World& new_world)
+{
     const auto current_gasses{m_gasses};
     m_gasses.clear();
+    auto rand_l_or_r = std::uniform_int_distribution<unsigned char>(0, 1);
     for (const auto [x, y] : current_gasses)
     {
         const auto& current = m_world->get(x, y);
@@ -212,8 +223,9 @@ void GravitySimulation::next()
         if (!current)
             continue;
 
-        const auto up_offset     = std::min(y + 1, m_world->height() - 1);
-        auto       update_gasses = std::bind(update_new_grid, x, y, _1, _2, std::ref(m_gasses));
+        const auto up_offset = std::min(y + 1, m_world->height() - 1);
+        auto       update_gasses =
+            std::bind(update_new_grid, std::ref(new_world), x, y, _1, _2, std::ref(m_gasses));
 
         if (y != m_world->height() - 1)
         {
@@ -236,8 +248,7 @@ void GravitySimulation::next()
 
         if (!right && !left)
         {
-            const auto rand_dir =
-                std::uniform_int_distribution<unsigned char>(0, 1)(m_random_device);
+            const auto rand_dir = rand_l_or_r(m_random_device);
             if (rand_dir == 0)
             {
                 update_gasses(left_offset, y);
@@ -265,9 +276,18 @@ void GravitySimulation::next()
         }
         else
         {
-            m_liquids.emplace(x, y);
+            m_gasses.emplace(x, y);
         }
     }
+}
+
+void GravitySimulation::next()
+{
+    World new_world{*m_world};
+
+    update_powders(new_world);
+    update_liquids(new_world);
+    update_gasses(new_world);
 
     *m_world = std::move(new_world);
 }

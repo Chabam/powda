@@ -26,6 +26,19 @@ class GravitySimulation
 
   private:
     using coord = std::pair<unsigned int, unsigned int>;
+
+    void update_powders(World& new_world);
+    void update_liquids(World& new_world);
+    void update_gasses(World& new_world);
+    static void update_new_grid(
+        World&                              new_world,
+        unsigned int                        a_x,
+        unsigned int                        a_y,
+        unsigned int                        b_x,
+        unsigned int                        b_y,
+        std::set<GravitySimulation::coord>& materials
+    );
+
     std::shared_ptr<World>     m_world;
     std::set<coord>            m_powders;
     std::set<coord>            m_liquids;
